@@ -197,7 +197,7 @@ checkenv ()
     
     if [ "$NEEDROOT" = "yes" ] ; then
 	if [ $UID -ne 0 ]; then
-	    error "You need to be root to run tobs!"
+	    error "You need to be root to run tob!"
 	fi
     fi
 }
@@ -218,14 +218,9 @@ readrc ()
     	error "BACKUPDIR is deprecated: check your config file, and rename it to BACKUPDEV"
     fi
 
-    if [ -d "$BACKUPDEV" ]; then
-    	BACKUPDIR=$BACKUPDEV
-    	BACKUPDEV="${BACKUPDIR}/${VOLUMENAME}_${DATE}_${TYPE}.${EXT}"
-    elif [ "$BACKUPDEV" = "" ]; then
-        BACKUPDIR="/var/lib/tob"
-    	BACKUPDEV="${BACKUPDIR}/${VOLUMENAME}_${DATE}_${TYPE}.${EXT}"
-    elif [ -f "$BACKUPDEV" -o ! -e "$BACKUPDEV" ]; then
-        BACKUPDIR=`dirname $BACKUPDEV`
+    if [ "$BACKUPDEV" = "" ]; then
+        BACKUPDEV="/var/lib/tob"
+	message "Using default backup device $BACKUPDEV"
     fi
 
     # check that relevant environment vars are set
@@ -352,7 +347,8 @@ makefulllist ()
     #fi
     #		       'findswitch' also removed from the paragraph after next
 
-  $nicefindcmd find `cat $TOBHOME/volumes/$1.startdir` $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
+  cat $TOBHOME/volumes/$1.startdir | \
+  xargs -i $nicefindcmd find {} $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
 	sed -e 's.\\.\\\\.g' | \
 	# If the exclude file contains non-blank lines, filter against it.
 	# If it is empty, or doesn't exist, just cat stdin to stdout
@@ -361,7 +357,7 @@ makefulllist ()
 	else
 	    cat
 	fi |
-	sort > $TMPLIST || \
+	sort -u > $TMPLIST || \
 	    error "list creation failed."
 
         grep -q . $TMPLIST ||
@@ -440,7 +436,7 @@ calcdeletions()
 searchlistings ()
 {
     cd $TOBLISTS || error "$TOBLISTS directory is missing."
-    files=`$LS -1 | $GREP -v _deletions$`
+    files=`$LS -1t | $GREP -v _deletions$`
 
     if [ "$files" = "" ] ; then
 	message "No backups were made."
@@ -477,14 +473,14 @@ countbackup ()
     else
 	sed -e 's.\\\\.\\.g' -e "$SEDNAMESCRIPT" < "$1" > $FILELIST
 	eval "$BACKUPCMDTOSTDOUT" |
-	    wc |
-	    awk '{ if ($3 < 1000)
-		        printf ("Estimated: %d bytes\n",$3); 
-	           else if ($3 < 1000000)
-			printf ("Estimated: %.1f KB\n",$3/1000.0); 
-	           else
-			printf ("Estimated: %.1f MB\n",$3/1000000.0); }' \
-	    || error "backup size estimate failed."
+           wc -c |
+           awk '{ if ($1 < 1000)
+                       printf ("Estimated: %d bytes\n",$1);
+                  else if ($1 < 1000000)
+                       printf ("Estimated: %.1f KB\n",$1/1000.0);
+                   else
+                       printf ("Estimated: %.1f MB\n",$1/1000000.0); }' \
+	   || error "backup size estimate failed."
     fi
 }
 
@@ -497,9 +493,14 @@ countbackup ()
 runverify ()
 {
     VOLUMENAME=$2		     # store name for usage in .rc file
-    if [ -d "$BACKUPDIR" ]; then
-	BACKUPDEV=`$LS ${BACKUPDIR}/${VOLUMENAME}_*Full.${EXT}`
+
+    if [ -d "$BACKUPDEV" ]; then
+        BACKUPDEV=(`$LS ${BACKUPDEV}/${VOLUMENAME}_*full.${EXT}`)
+        if [ ${#BACKUPDEV[*]} -ne 1 ]; then
+            error "More than one full backup to choose from.  Use -f to select one."
+        fi
     fi
+
     message "Now starting verify program for $BACKUPDEV."
     ( cd /;
       eval "$VERIFYCMD" 
@@ -512,6 +513,9 @@ runverify ()
 runbackup ()
 {
     VOLUMENAME=$2	# store name for usage in .rc file
+    if [ -d "$BACKUPDEV" ]; then
+    	BACKUPDEV="${BACKUPDEV}/${VOLUMENAME}_${DATE}_${TYPE}.${EXT}"
+    fi
     
     message "Now starting backup program to write to $BACKUPDEV."
     sed -e 's.\\\\.\\.g' -e "$SEDNAMESCRIPT" < "$1" > $FILELIST
@@ -553,9 +557,9 @@ listvolumes ()
 	exclude=$base.exclude
 
 	echo "Volume \"$base\""
-	message "    starts:   " `cat $f`
+	echo "    starts:   " `cat $f`
 	if [ -f $exclude ] ; then
-	    message "    excludes: " `cat $exclude`
+	    echo "    excludes: " `cat $exclude`
 	fi
     done
 }
@@ -576,12 +580,14 @@ findfile ()
 
 deleteoldbackups ()
 {
-    if [ -d "$BACKUPDIR" -a "$MAXBACKUPAGE" -ge 0 ]; then
+    # Since runbackups has run, $BACKUPDEV is either a file or a device.
+    # We only do deletions when it is a file.
+    if [ "$MAXBACKUPAGE" -ge 0 -a -f "$BACKUPDEV" ]; then
 	UPTO=`basename $BACKUPDEV`
-	cd $BACKUPDIR
-	message "Deleting old backups:"
+	cd `dirname $BACKUPDEV`
+	message "Deleting old backups from `dirname $BACKUPDEV`:"
 	PR=""; [ "$VERBOSE" == "yes" ] && PR="-print"
-	find . -regex ./${VOLUMENAME}_'.*\('$1'\).*' -type f -maxdepth 1 -mtime +$MAXBACKUPAGE ! -name "$UPTO" -exec $RM -f {} \; $PR
+	find . -regex ./${VOLUMENAME}_'.*\('$1'\).*' -type f -mtime +$MAXBACKUPAGE ! -name "$UPTO" -exec $RM -f {} \; $PR
     fi
 }
 
@@ -691,15 +697,13 @@ inccount ()
 # generate listing of stuff on backup device
 verbose ()
 {
-
-    if [ -d "$BACKUPDIR" ]; then
-      message "Generating report of $BACKUPDIR."
-      for i in `$LS ${BACKUPDIR}/*`; do
+    message "Generating report of $BACKUPDEV."
+    if [ -d "$BACKUPDEV" ]; then
+      for i in `$LS ${BACKUPDEV}/*.${EXT}`; do
       	BACKUPDEV=$i
 	eval "$LISTCMD"
       done
     else
-      message "Generating report of $BACKUPDEV."
       eval "$LISTCMD" || error "listing of $BACKUPDEV cannot be generated."
     fi
 }
@@ -718,8 +722,8 @@ restore ()
     FILESPEC=$3
     message "Restoring volume $VOLUMENAME files matching $FILESPEC into $startdir."
 
-    if [ -d "$BACKUPDIR" ]; then
-       for i in `$LS ${BACKUPDIR}/${VOLUMENAME}_*.${EXT}`; do
+    if [ -d "$BACKUPDEV" ]; then
+       for i in `$LS ${BACKUPDEV}/${VOLUMENAME}_*.${EXT}`; do
           BACKUPDEV=$i
 	  eval "$RESTORECMD" && message "restored data from $i"
        done

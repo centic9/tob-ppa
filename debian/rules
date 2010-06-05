@@ -1,10 +1,10 @@
 #!/usr/bin/make -f
 # 							-*- makefile -*-
 # debian/rules file for the Debian/GNU Linux tob package
-# Copyright 1996-2003 by Dirk Eddelbuettel <edd@debian.org>
+# Copyright 1996-2007 by Dirk Eddelbuettel <edd@debian.org>
 
 package	= tob
-debdir	:= $(shell pwd)/debian/tmp
+debdir	:= $(shell pwd)/debian/$(package)
 
 # export DH_VERBOSE=1
 
@@ -24,9 +24,11 @@ build-stamp:
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp
+	rm -f build-stamp 
         #-$(MAKE) clean
 	dh_clean
+        ## no longer needed but creeps around
+	rm -vf debian/conffiles
 
 binary-indep: build
 	dh_testdir
@@ -52,7 +54,8 @@ binary-indep: build
         #dh_installinit
         #dh_installcron
 	dh_installman			tob.8
-	pod2man contrib/tobconv		$(debdir)/usr/share/man/man8/tobconv.8
+	pod2man --section 8 \
+		contrib/tobconv		$(debdir)/usr/share/man/man8/tobconv.8
         #dh_undocumented
 	dh_installchangelogs
 	dh_strip

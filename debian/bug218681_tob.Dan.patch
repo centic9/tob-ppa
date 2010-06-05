@@ -1,0 +1,21 @@
+--- tob.orig.4	2004-03-10 23:29:43.000000000 -0500
++++ tob	2004-03-21 13:25:02.000000000 -0500
+@@ -347,7 +347,8 @@
+     #fi
+     #		       'findswitch' also removed from the paragraph after next
+ 
+-  $nicefindcmd find `cat $TOBHOME/volumes/$1.startdir` $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
++  cat $TOBHOME/volumes/$1.startdir | \
++  xargs -i $nicefindcmd find {} $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
+ 	sed -e 's.\\.\\\\.g' | \
+ 	# If the exclude file contains non-blank lines, filter against it.
+ 	# If it is empty, or doesn't exist, just cat stdin to stdout
+@@ -356,7 +357,7 @@
+ 	else
+ 	    cat
+ 	fi |
+-	sort > $TMPLIST || \
++	sort -u > $TMPLIST || \
+ 	    error "list creation failed."
+ 
+         grep -q . $TMPLIST ||

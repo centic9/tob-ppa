@@ -1,0 +1,12 @@
+--- tob	2004-03-06 20:21:52.000000000 -0500
++++ tob.abort	2004-03-07 21:28:21.000000000 -0500
+@@ -493,7 +493,8 @@
+ {
+     VOLUMENAME=$2		     # store name for usage in .rc file
+     if [ -d "$BACKUPDEV" ]; then
+-	BACKUPDEV=`$LS ${BACKUPDEV}/${VOLUMENAME}_*full.${EXT}`
++	echo  "BACKUPDEV is set to a directory: $BACKUPDEV"
++	error "Use -f to specify a file or device to verify."
+     fi
+     message "Now starting verify program for $BACKUPDEV."
+     ( cd /;

@@ -1,3 +1,64 @@
+tob (0.26.cvs.20040226-7) unstable; urgency=low
+
+  * tob: Remove '-maxdepth 1' from find call in deleteoldbackups()
+    function as it triggers a noisy warning from find.
+  							(Closes: #584490)
+
+  * tob.8: Minor formatting change suggested by Lintian warning
+  
+  * debian/control: Set Standards-Version: to current version 
+  * debian/control: Updated Builds-Depends: on debhelper
+  * debian/control: Added Depends: on ${misc:Depends}
+  * debian/source/format: Added pointless format specification
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Sat, 05 Jun 2010 09:48:39 -0500
+
+tob (0.26.cvs.20040226-6) unstable; urgency=low
+
+  * tob: Apply patch by Fabio Muzzi that correct 'tob -fullcount' on 
+    systems with the en-US.UTF-8 locale			(Closes: #419232)
+  
+  * debian/control: Add debhelper to Build-Depends: 	[lintian]
+  * debian/control: Updated Build-Depends: on debhelper (>= 5.0.0)
+  * debian/control: Updated Standards-Version: to 3.7.2	[lintian]
+  * debian/compat: Added with value 5			[lintian]
+  * debian/rules: Update package temp. directory accordingly
+  * debian/conffiles: Removed as no longer needed
+  * debian/copyright: Updated FSF address		[lintian]
+  * debian/rules: Call pod2man with '--section 8' to get tobconv.8 into
+    the right section					[lintian]
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 22 Apr 2007 11:20:43 -0500
+
+tob (0.26.cvs.20040226-5) unstable; urgency=low
+
+  * tob: Apply patch by Dan Christensen that should have gotten in earlier
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 21 Mar 2004 15:36:20 -0600
+
+tob (0.26.cvs.20040226-4) unstable; urgency=low
+
+  * tob: Now really apply the patch
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 10 Mar 2004 22:28:39 -0600
+
+tob (0.26.cvs.20040226-3) unstable; urgency=low
+
+  * tob: Applied one-char patch by Michael Schuerig to sort backups displayed
+    by '-backups' command in descending date order (Closes: #237331)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 10 Mar 2004 21:41:19 -0600
+
+tob (0.26.cvs.20040226-2) unstable; urgency=low
+
+  * tob: Applied patch by Dan Christensen which cleans the BACKUPDEV
+    vs BACKUPDIR issues in tob and tob.rc. Many thanks to Dan, please see
+    the log for bug report #227009 for fuller description (Closes: #227009)
+  * tob: Applied another patch suggestion by Dan to deal with -verify
+    in case several full backups are encountered in BACKUPDEV.
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon,  8 Mar 2004 20:45:42 -0600
+
 tob (0.26.cvs.20040226-1) unstable; urgency=low
 
   * New upstream CVS checkout plus application of the patches from BTS
@@ -5,7 +66,7 @@ tob (0.26.cvs.20040226-1) unstable; urgency=low
     - Improved deletion of old backups 			 (Closes: #231118)
     - No good way to change backup file name		 (Closes: #231121)
   
- -- Dirk Eddelbuettel <edd@debian.org>  Thu, 26 Feb 2004 21:01:36 -0600
+ -- Dirk Eddelbuettel <edd@debian.org>  Thu, 26 Feb 2004 21:04:49 -0600
 
 tob (0.26.cvs.20040201-1) unstable; urgency=low
 
@@ -211,33 +272,33 @@ tob (0.14-16) unstable; urgency=low
 
  -- Dirk Eddelbuettel <edd@debian.org>  Fri,  5 Mar 1999 22:42:53 -0500
 
-tob (0.14-15) unstable; urgency=low, Closes=33546
+tob (0.14-15) unstable; urgency=low
 
   * tob: Use SEDNAMESCRIPT in runverify(). Thanks to
-    stalex@physlab.sci.ccny.cuny.edu for the patch. (fixes #33546)
+    stalex@physlab.sci.ccny.cuny.edu for the patch. (Closes: #33546)
 
-  -- Dirk Eddelbuettel <edd@debian.org>  Sun, 21 Feb 1999 20:21:48 -0500
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 21 Feb 1999 20:21:48 -0500
 
-tob (0.14-14) unstable; urgency=low, Closes=31037
+tob (0.14-14) unstable; urgency=low
 
   * tob: Added (modified) patch by Richard Hawes <hawesr@gemair.com>
     for a '-f altdev' option to specify an alternative backup
-    device. (fixes #31037)
+    device. (Closes: #31037)
   * tob.8: Changed manual page accordingly
 
  -- Dirk Eddelbuettel <edd@debian.org>  Sat,  9 Jan 1999 10:18:16 -0500
 
-tob (0.14-13) unstable; urgency=low, Closes=29606
+tob (0.14-13) unstable; urgency=low
 
-  * tob: Changed to use .gz suffix instead of .z (fixes #29606)
+  * tob: Changed to use .gz suffix instead of .z (Closes: #29606)
   * postinst: Added code to rename old listings to .gz suffix
   
  -- Dirk Eddelbuettel <edd@debian.org>  Wed, 25 Nov 1998 20:47:15 -0500
 
-tob (0.14-12) frozen unstable; urgency=low, Closes=29314
+tob (0.14-12) frozen unstable; urgency=low
 
   * Applied patch to tob.8 by Jim Van Zandt <jrv@vanzandt.mv.com> which
-    corrects some wording, some formating and one factual error (fixes #29314)
+    corrects some wording, some formating and one factual error (Closes: #29314)
   * Added a contribution by Frank Miles <fpm@u.washington.edu> (and
     further modified it) to add a new option '-verify <vol>' to
     check an archive written with afio
@@ -272,10 +333,10 @@ tob (0.14-9) frozen unstable; urgency=low
 
  -- Dirk Eddelbuettel <edd@debian.org>  Sun, 17 May 1998 16:52:30 -0400
 
-tob (0.14-8) frozen unstable; urgency=low, Closes=22462
+tob (0.14-8) frozen unstable; urgency=low
 
   * Changed /sbin/tob to use tempfile(1) and test its result and
-    removed the tempfile call from /etc/tob.rc (fixes #22462)
+    removed the tempfile call from /etc/tob.rc (Closes: #22462)
   * Removed the 'set -e' from /sbin/tob as we're now testing tempfile 
   * Updated the configuration file /etc/tob.rc and added more comments
   * Modified /sbin/tob following a suggestion by Alexander Shumakovitch
@@ -285,23 +346,23 @@ tob (0.14-8) frozen unstable; urgency=low, Closes=22462
   
  -- Dirk Eddelbuettel <edd@debian.org>  Sat, 16 May 1998 19:01:04 -0400
 
-tob (0.14-7) frozen unstable; urgency=low, Closes=21412
+tob (0.14-7) frozen unstable; urgency=low
 
   * Changed /sbin/tob to not use 'set -e' in a small segment of code where
-    a grep(1) might evaluate to false causing tob to abort. 
+    a grep(1) might evaluate to false causing tob to abort. (Closes: #21412)
 
  -- Dirk Eddelbuettel <edd@debian.org>  Fri, 24 Apr 1998 18:51:44 -0400
 
-tob (0.14-6) frozen unstable; urgency=low, Closes=21412
+tob (0.14-6) frozen unstable; urgency=low
 
-  * Added dependency on debianutils as tob uses tempfile (fixes #21412) 
-  * Added 'set -e' to force tob to abort on error (fixes #21412)
+  * Added dependency on debianutils as tob uses tempfile (Closes: #21412) 
+  * Added 'set -e' to force tob to abort on error (Closes: #21412)
 
  -- Dirk Eddelbuettel <edd@debian.org>  Wed, 22 Apr 1998 21:55:37 -0400
 
-tob (0.14-5) unstable; urgency=low, Closes=21412
+tob (0.14-5) unstable; urgency=low
 
-  * Add a test clause before file removal (fixes #21412)
+  * Add a test clause before file removal (Closes: #21412)
 
  -- Dirk Eddelbuettel <edd@debian.org>  Mon, 20 Apr 1998 21:52:40 -0400
 
