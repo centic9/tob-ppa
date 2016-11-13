@@ -353,7 +353,7 @@ makefulllist ()
 	# If the exclude file contains non-blank lines, filter against it.
 	# If it is empty, or doesn't exist, just cat stdin to stdout
 	if grep -q -s . $TOBHOME/volumes/$1.exclude ; then
-	    grep -v -f$TOBHOME/volumes/$1.exclude
+	    grep -v -f$TOBHOME/volumes/$1.exclude --binary-files=text
 	else
 	    cat
 	fi |
