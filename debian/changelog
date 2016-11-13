@@ -1,3 +1,9 @@
+tob (0.26.cvs.20040226-7ubuntu0~ppa4) xenial; urgency=medium
+
+  * Adjust packagings, executable, remove files that are not needed.
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Sun, 13 Nov 2016 20:41:10 +0100
+
 tob (0.26.cvs.20040226-7ubuntu0~ppa3) xenial; urgency=medium
 
   * Fix signal 13/broken pipe when a grep encounters an unexpected binary in filenames
