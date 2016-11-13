@@ -1,0 +1,69 @@
+Resent-From: era eriksson <era@iki.fi>
+From: era eriksson <era@iki.fi>
+To: submit@bugs.debian.org
+Subject: Bug#69555: tob: Minor wart: Expensive shell programming
+Date: Mon, 21 Aug 2000 07:44:28 +0300
+
+Package: tob
+Version: 0.14-18
+Severity: wishlist
+
+This isn't really a change request, more a matter of aesthetics, but
+you may want to consider this whenever you're making changes to the
+main tob script anyway.
+
+The modification essentially consists of changing the definition of
+the S variable so that it contains the literal control character; thus
+you don't need to echo it back within backticks (or $(...)), saving a
+number of unnecessary subprocesses.
+
+The quoting could probably be simplified but I didn't want to muck
+with that. Without really having investigated, I'd say most of the
+strings could be within a single pair of double (weak) quotes.
+
+Looking at this again, I'd probably also simplify the SEDNAMESCRIPT --
+if the intention is to delete everything after the first $S, a simpler
+script like "s/$S.*//" should suffice.
+
+(Theoretically, you should escape any regex special characters in S,
+in case the user arbitrarily chooses "." or "/" as the separator
+character -- but it's probably not necessary. As a defensive move,
+perhaps something like "case $S in *[/\[\]\\.]*) warn and die ;; esac"
+could be put after the definition of S.)
+
+Hope this helps,
+
+/* era */
+
+--- /tmp/tob.orig	Wed Aug 16 08:31:18 2000
++++ /tmp/tob	Wed Aug 16 08:33:04 2000
+@@ -98,16 +98,16 @@
+ 
+ # Separator Definition: change to " " to get the standard behaviour back,
+ # but note that this will break '-find' on files with spaces in their names 
+-S="\001"
++S="`echo -e \"\\001\"`"
+ 
+ # FINDPRINTCMD: -print format string for find
+-#FINDPRINTCMD='%p'$(echo -e $S)'[ctime:]'$(echo -e $S)'%c'$(echo -e $S)'[owner/group:]'$(echo -e $S)'%u:%g'$(echo -e $S)'[inode:]'$(echo -e $S)'%i'$(echo -e $S)'[linkto:]'$(echo -e $S)'%l'$(echo -e $S)'[perm:]'$(echo -e $S)'%m'$(echo -e $S)'[hardlinks:]'$(echo -e $S)'%n\n'
++#FINDPRINTCMD='%p'"$S"'[ctime:]'"$S"'%c'"$S"'[owner/group:]'"$S"'%u:%g'"$S"'[inode:]'"$S"'%i'"$S"'[linkto:]'"$S"'%l'"$S"'[perm:]'"$S"'%m'"$S"'[hardlinks:]'"$S"'%n\n'
+ # edd 13 Mar 2000: changed '%c' to '%C@' following the suggestion in Debian bug 
+ #                  report #60270 to render the time format independent of DST changes
+-FINDPRINTCMD='%p'$(echo -e $S)'[ctime:] %C@ [owner/group:] %u:%g [inode:] %i [linkto:] %l [perm:] %m [hardlinks:] %n\n'
++FINDPRINTCMD='%p'"$S"'[ctime:] %C@ [owner/group:] %u:%g [inode:] %i [linkto:] %l [perm:] %m [hardlinks:] %n\n'
+ 
+ # SEDNAMESCRIPT: a script for sed to extract the file name from the list
+-SEDNAMESCRIPT='s/\(.*\)'$(echo -e $S)'\[ctime:\].*/\1/'
++SEDNAMESCRIPT='s/\(.*\)'"$S"'\[ctime:\].*/\1/'
+ 
+ 
+ ##########################################################################
+
+
+-- System Information
+Debian Release: 2.0
+Kernel Version: Linux away 2.0.34 #1 Sun Feb 28 21:48:09 EET 1999 i586 unknown
+
+Versions of the packages tob depends on:
+ii  debianutils    1.13.3         Miscellaneous utilities specific to Debian.
+

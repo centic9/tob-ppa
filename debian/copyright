@@ -1,0 +1,40 @@
+
+This is Debian Linux's prepackaged version of the tob utility. Tob is a
+driver for the making and maintaining of (tape-oriented) backups. It was
+written by Karel Kubat <karel@icce.rug.nl>. It is now maintained upstream by 
+Stephen van Egmomd <svanegmond@tinyplanet.ca.
+
+This package was put together by Dirk Eddelbuettel <edd@debian.org>
+from the sources from ftp://ftp.icce.rug.nl/pub/unix/tob-0.14.tar.gz.
+The following changes were made 
+	* adding the Debian package maintenance system 
+	* adding a manual page were made.
+	* small changes in /sbin/tob to better match FSSTND 
+See the file /usr/share/doc/tob/Changelog.debian for details.
+Current sources are available at http://tinyplanet.ca
+
+Karel Kubat has released tob under the GNU General Public License:
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 2 dated June, 1991.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program;  if not, write to the Free Software Foundation, 
+   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+On Debian Linux systems, the complete text of the GNU General Public 
+License can be found in `/usr/share/common-licenses/GPL'.
+
+The modifications for Debian (the addition of the debian.* files and
+the changes to the original source code) are 
+    Copyright (C) 1995-2002 Dirk Eddelbuettel <edd@debian.org>
+and are also released under the GNU General Public License.
+
+
+

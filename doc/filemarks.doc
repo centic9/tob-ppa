@@ -1,0 +1,59 @@
+A short introduction to file marks:
+===================================
+
+  File marks are written to tape to separate individual files (Note
+that one `tar' file may contain many data files!). So several
+files can be written to tape and individually retrieved.
+  The way ftape implements these file marks allows almost random
+access to individual files (instead of sequentially reading the
+entire tape until ones finds the right file mark).
+
+  Every time the device is closed after writing some data two file
+marks are written to tape. If the non-rewinding device is used the
+tape is rewound so it is positioned right between these two marks.
+  If another file is written to tape the second marks is overwritten
+but the first stays causing succeeding files to be separated by
+exactly one file mark.
+
+  The following should make this clear: After writing one file to the
+non-rewinding tape device the tape layout will be:
+
+        <file-1> <eof> <eof>
+
+  When another file is written the layout will be:
+
+        <file 1> <eof> <file 2> <eof> <eof>
+
+
+  If we want to add another file to this tape after it has been
+rewound, there are to options: First to skip 2 file marks to position
+right between the last two marks. In this case we have to know how
+many files to skip.
+  The other solution is to seek for the double file mark and position
+in between. This is done with `mt eom'.
+  Remember to use the non-rewinding device when positioning the tape
+or it will be rewound when closing !
+
+  Appending a file to a tape:
+
+        mt -f /dev/nftape eom
+        tar cvf /dev/ftape <files>
+
+  Reading the first and third files from tape:
+
+        mt -f /dev/ftape rewind
+        tar xvf /dev/nftape
+        mt -f /dev/nftape fsf 2
+        tar xvf /dev/nftape
+
+  The best way to understand what is happening is to picture the tape
+layout and count the file marks that have to be skipped.
+
+
+BTW: Keep in mind that file marks aren't written to tape until the
+     header segment is updated. For non-rewinding devices this will
+not happen automatically: Make sure that either the last write is to
+a rewinding device or issue an `mt rewind' or `mt rewoffl' to flush
+the buffers. The last command will put the drive offline until you
+reload the cartridge (or the driver). While the drive is offline all
+commands will fail.

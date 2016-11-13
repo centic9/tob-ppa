@@ -1,0 +1,13 @@
+- don't use MT=/bin/ftmt as we don't need to depend on ftape-utils
+- don't need pushd/popd, use subshell
+- (you don't need explicit precmd/postcmd if kerneld is set right
+- moved VERIFY_DESCRIP_LIST naming into tob to (safely)  use tempfile(1)
+- for afio: do we really the -ZG9 on LISTCMD and RESTORECMD? [ My mistake, I
+  had added them before ]
+- had to remove
+	    if [ $BACKUPDEV = "/dev/ftape" ] ; then
+		$MT -f $BACKUPDEV rewind
+	    fi
+  as we cannot test for an explicit /dev/ftape, 
+  folks should use a rewinding tape
+- verify only works with afio, so test for it

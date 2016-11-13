@@ -1,0 +1,51 @@
+# Resource file for tob (version 0.01 and higher), using afio'd compressed
+# archives. Use this resource file if you're backing up to a remote device,
+# i.e. across a network.
+# See the docs for a full explanation.
+
+VERBOSE="yes"
+
+# Remote backups are a tat more difficult. Basically, you need to run an rsh
+# to access the remote backup device. The procedure goes as follows:
+# 1. You run the tob script from the _local_ machine, to a device on the
+#    _remote_ machine.
+# 2. On the local machine you create a pipe where the backup goes to. The
+#    BACKUPDEV setting reflects this pipe. The pipe is created with "mknod".
+# 3. Then you start an rsh at the remote machine to read stdin and to dd it to
+#    the actual device (e.g. a tape). The rsh may not be started as "root",
+#    since rsh prohibits that. So, you need a non-root user at both machines
+#    (say "joe"). You feed the rsh the contents of the local pipe. E.g.:
+#    su - joe -c "rsh remote dd of=/dev/ftape < /tmp/pipe" &
+# 						           ^ cmd in background
+# 					      ^ gets its input from /tmp/pipe
+# 		  ^ that command is rsh, to do stuff at remote host
+#    ^ this thingy is started as user "joe"
+# 4. Now on the local machine you can happily run the backup as root to the
+#    pipe, the background process will copy as user "joe" the pipe to a remote
+#    device using "rsh".
+# 5. Once the backup finishes, the pipeline gets EOF'd, thereby automatically
+#    terminating the rsh.
+
+# backup device on the local machine, must be the pipeline
+BACKUPDEV="/tmp/pipe.$$"
+# backup device on the remote machine, set to a temporary file
+# (change this into something more meaningful)
+# the remote host where the actual backup device is
+REMOTEHOST="suffix"
+REMOTEBACKUPDEV="/tmp/backup.out"
+# the user to start the rsh, since this may not be root
+RSHUSER="karel"
+
+# These should generally be ok, if the above variables are right:
+PRECMD1="mknod $BACKUPDEV p ; chmod a+rw $BACKUPDEV"
+if [ "$TYPE" = "full" -o "$TYPE" = "diff" -o "$TYPE" = "inc" ] ; then
+    # remote command must write to REMOTEBACKUPDEV, local
+    # command must read from BACKUPDEV
+    PRECMD2='su - $RSHUSER -c "rsh $REMOTEHOST dd of=$REMOTEBACKUPDEV < $BACKUPDEV" &'
+else
+    # remote command must read from REMOTEBACKUPDEV, local command
+    # must write to BACKUPDEV
+    PRECMD2='su - $RSHUSER -c "rsh $REMOTEHOST dd if=$REMOTEBACKUPDEV > $BACKUPDEV" &'
+fi
+
+POSTCMD="echo $BACKUPDEV is now superfluous, remove it when this job finishes"

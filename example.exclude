@@ -1,0 +1,4 @@
+^/dev/
+^/proc/
+^/tmp/
+/\.journal^A

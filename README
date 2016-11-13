@@ -1,0 +1,47 @@
+This is tob, the Tape Oriented Backup.  Hope it's useful.
+
+REQUIREMENTS
+
+tob uses a separate archiver to do its work.  The stock, recommended,
+configuration uses 'afio'.  We suggestion at least afio 2.4.8.
+
+Other archivers that are known to work include tar and arj; please
+see the sample-rc directory for examples.
+
+You also need bash, sed, and other standard Unix tools.
+
+
+INSTALLATION
+
+Debian: 
+	apt-get install tob
+
+Manual:
+	cp tob /usr/local/sbin
+	mkdir /etc/tob
+	mkdir /etc/tob/volumes
+	cp tob.rc /etc/tob/tob.rc
+	cp example.* /etc/tob/volumes
+
+Red Hat:
+	rpm -ta tob-*.tgz
+	rpm -i tob*.rpm
+
+
+Test your installation by typing:
+	tob -full example
+	tob -verify example
+
+There are manual pages available in the archive, which should
+be put into /usr/local/man/man8.
+
+
+MORE DOCUMENTATION
+
+Tob's home page is at http://tinyplanet.ca/projects/tob/
+
+Read doc/tob.ps.gz or doc/ps/tob.txt.gz, though it may 
+be slightly out of date.
+
+-- Stephen van Egmond <svanegmond@tinyplanet.ca>
+   June 7, 2003

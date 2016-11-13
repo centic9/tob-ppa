@@ -1,0 +1,336 @@
+Envelope-to: edd@edd.debian.net
+Delivery-date: Mon, 08 Apr 2002 20:48:14 -0500
+Subject: Bug#141830: tob: make tob a bit quieter?
+Reply-To: Dan Christensen <jdc@uwo.ca>, 141830-maintonly@bugs.debian.org
+Original-Sender: Dan Christensen <jdc@itchy.dhis.org>
+To: 141830-maintonly@bugs.debian.org
+From: Dan Christensen <jdc@uwo.ca>
+
+Ok, here's a patch.  Let me know what you think.
+
+Dan
+
+--- /sbin/tob	Sat Dec  2 17:50:06 2000
++++ /sbin/tob.mine	Mon Apr  8 17:07:19 2002
+@@ -79,7 +79,7 @@
+ rc4=$?
+ if [ $rc1 -ne 0 -o $rc2 -ne 0 -o $rc3 -ne 0 -o $rc4 -ne 0 ]
+ then 
+-    echo " Fatal tob error: could not create temporary files" >&2
++    echo " tob: Fatal error: could not create temporary files" >&2
+     exit 1
+ fi    
+ 
+@@ -127,8 +127,8 @@
+ # In addition to PRECMD, you have PRECMD1 and PRECMD2 (if you need more
+ # preloading), the commands are executed in a series (PRECMD, then PRECMD1,
+ # then PRECMD2).
+-PRECMD='message This is the tob script.'
+-POSTCMD='message Bye.'
++PRECMD=''
++POSTCMD=''
+ 
+ ###########################################################################
+ # Not configurable settings, used internally:
+@@ -138,19 +138,26 @@
+ RCLIST='/usr/local/etc/tob.rc /etc/tob/tob.rc /etc/tob.rc /usr/etc/tob.rc'
+ 
+ ############################################################################
+-# show a message to the screen
++# show a message to the screen (if VERBOSE)
+ message ()
+ {
+     if [ "$VERBOSE" = "yes" ] ; then
+-	echo " ""$*" >&2
++	echo " tob: ""$*" >&2
+     fi
+ }
+ 
+ ############################################################################
++# print a warning message (doesn't look at VERBOSE)
++warn ()
++{
++    echo " tob: ""$*" >&2
++}    
++
++############################################################################
+ # print error message and die
+ error ()
+ {
+-    message " Fatal tob error: ""$*"
++    echo " tob: Fatal error: ""$*" >&2
+     $RM -f $TMPLIST $TMPLIST1 $TMPLIST2 $FILELIST 
+     postcommand
+     exit 1
+@@ -163,7 +170,6 @@
+     found='no'
+     for f in $RCLIST ; do
+ 	if [ -f $f -a "$found" = "no" ] ; then
+-	    message "Resource file: $f"
+ 	    RCFILE=$f
+ 	    found='yes'
+ 	fi
+@@ -192,7 +198,7 @@
+     
+     if [ "$NEEDROOT" = "yes" ] ; then
+ 	if [ $UID -ne 0 ]; then
+-	    error "You need to be root to run tobs!"
++	    error "you need to be root to run tob!"
+ 	fi
+     fi
+ }
+@@ -201,12 +207,11 @@
+ # read resource files
+ readrc ()
+ {
+-    . "$RCFILE" || error "Syntax error in $RCFILE?"
+-    message "Ok, got resource $RCFILE."
++    . "$RCFILE" || error "syntax error in $RCFILE?"
+ 
+     if [ "$ALT_BLK_DEV" != "" ]; then
+ 	BACKUPDEV="$ALT_BLK_DEV"
+-	message "Using alternative backup device $BACKUPDEV"
++	message "using alternative backup device $BACKUPDEV"
+     fi
+ 
+     # check that relevant environment vars are set
+@@ -217,7 +222,6 @@
+ # clean up all stale files
+ cleanup ()
+ {
+-    message 'Cleaning up.'
+     $RM -f $TMPLIST $TMPLIST1 $TMPLIST2 $FILELIST 
+     postcommand
+ }
+@@ -310,7 +314,7 @@
+ 	error "$TOBHOME/volumes/$1.startdir not found, no such volume."
+     fi
+ 
+-    message "Building list of all files of volume $1.. patience."
++    message "building list of files"
+ 
+     # Let's see if `find' should scan for directories too. Under afio, it
+     # should since the dirs (with their permissions) will get included in the
+@@ -352,8 +356,6 @@
+ # make a list of a diff backup
+ makedifflist ()
+ {
+-    message "Making list of different files of volume $1.. patience."
+-
+     if [ ! -f "$TOBLISTS/$1.Full.gz" ] ; then
+ 	error "cannot make list of different files: no full backup exists."
+     fi
+@@ -374,8 +376,6 @@
+ # make listing of an incremental backup
+ makeinclist ()
+ {
+-    message "Making list for incremental backup of volume $1.. patience."
+-
+     if [ ! -f "$TOBLISTS/$1.Full.gz" ] ; then
+ 	error "cannot create incremental list: no full backup exists."
+     fi
+@@ -387,10 +387,10 @@
+     if gunzip -c $TOBLISTS/$1.* ; then
+         : nothing
+     else
+-        error "failure to merge listings of previous backups."
++        error "failed to merge listings of previous backups."
+     fi | 
+     sort > "$TMPLIST2" ||
+-        error "failure to merge listings of previous backups."
++        error "failed to merge listings of previous backups."
+     # all that's been backed up now listed and sorted in $TMPLIST2
+ 
+     diff "$TMPLIST" "$TMPLIST2" |
+@@ -423,13 +423,13 @@
+     files=`$LS -1`
+ 
+     if [ "$files" = "" ] ; then
+-	message "No backups were made."
++	warn "no backups were made."
+     else
+ 	for f in $files ; do
+ 	    vol=`echo $f | sed 's/\..*//g'`
+ 	    type=`echo $f | sed 's/\.gz//g' | sed 's/[^\.]*\.//g'`
+ 	    if [ ! -f $TOBHOME/volumes/$vol.startdir ] ; then
+-		message "List file $f: there is no corresponding volume." \
++		warn "List file $f: there is no corresponding volume." \
+ 			"Stale list file?"
+ 	    else
+ 		echo "$vol $type" | \
+@@ -452,7 +452,7 @@
+ {
+ 
+     if [ ! -s "$1" ] ; then
+-	echo "0 bytes is estimated size, backup not needed."
++	warn "0 bytes is estimated size, backup not needed."
+     else
+ 	sed -e 's.\\\\.\\.g' -e "$SEDNAMESCRIPT" < "$1" > $FILELIST
+ 	eval "$BACKUPCMDTOSTDOUT" |
+@@ -476,7 +476,7 @@
+ runverify ()
+ {
+     VOLUMENAME=$2		     # store name for usage in .rc file
+-    message "Now starting verify program for $BACKUPDEV."
++    message "Verifying $BACKUPDEV."
+     ( cd /;
+       sed -e "$SEDNAMESCRIPT" < "$1" > $FILELIST
+       eval "$VERIFYCMD" 
+@@ -490,7 +490,7 @@
+ {
+     VOLUMENAME=$2	# store name for usage in .rc file
+     
+-    message "Now starting backup program to write to $BACKUPDEV."
++    message "writing to $BACKUPDEV"
+     sed -e 's.\\\\.\\.g' -e "$SEDNAMESCRIPT" < "$1" > $FILELIST
+     eval "$BACKUPCMD" || error "backup command failed."
+ }
+@@ -500,7 +500,7 @@
+ check ()
+ {
+     # check that directories are there
+-    message "Checking existence of directories."
++    message "checking existence of directories."
+     cd $TOBHOME || error "no TOBHOME directory $TOBHOME found."
+     if [ ! -d volumes ] ; then
+ 	error "$TOBHOME/volumes directory is missing."
+@@ -509,7 +509,7 @@
+ 	error "$TOBLISTS directory is missing."
+     fi
+     
+-    message "Checking volumes in $TOBHOME/volumes"
++    message "checking volumes in $TOBHOME/volumes"
+     cd $TOBHOME/volumes || error "no volumes directory."
+ 
+     # check that startdirs are here
+@@ -520,7 +520,7 @@
+ # List defined volumes
+ listvolumes ()
+ {
+-    message "Listing volumes in $TOBHOME/volumes"
++    message "listing volumes in $TOBHOME/volumes"
+     cd $TOBHOME/volumes || error "no volumes directory."
+ 
+     # check that startdirs are here
+@@ -555,10 +555,10 @@
+ # make a full backup
+ full ()
+ {
+-    message "About to make a full backup of volume $2."
++    message "full backup of volume $2 started"
+     makefulllist "$2"
+     runbackup $TMPLIST "$2"
+-    message "Saving listing file and removing all older listings."
++    message "saving listing file and removing all older listings"
+     $RM -f $TOBLISTS/$2.Full* $TOBLISTS/$2.incremental* $TOBLISTS/$2.differential.*
+     gzip -c $TMPLIST > $TOBLISTS/$2.Full.gz
+ }
+@@ -576,16 +576,16 @@
+ 	message "About to verify a full backup of volume $2."
+ 	message "Using the previously generated file listing."
+ 	if [ ! -f "$TOBLISTS/$2.Full.gz" ] ; then
+-	    message "File listing [$TOBLISTS/$2.Full.gz] not found; regenerate."
++	    warn "File listing [$TOBLISTS/$2.Full.gz] not found; regenerating."
+ 	    makefulllist "$2"
+ 	    if [ ! -f "$TOBLISTS/$2.Full.gz" ] ; then
+-		error "Could not obtain file listing for verification"
++		error "could not obtain file listing for verification"
+ 	    fi
+ 	fi
+ 	gzip -cd $TOBLISTS/$2.Full.gz > $TMPLIST
+ 	runverify $TMPLIST "$2"
+     else
+-	error "verify options is available for afio backups only."
++	error "verify option is available for afio backups only."
+     fi
+ }
+ 
+@@ -593,9 +593,8 @@
+ # count size of a full backup
+ fullcount ()
+ {
+-    message "About to determine the size of a full backup of volume $2."
++    message "determining size of full backup of volume $2"
+     makefulllist "$2"
+-    message "Now starting backup program to pipe output to counter."
+     countbackup $TMPLIST
+ }
+ 
+@@ -603,13 +602,13 @@
+ # make a diferential backup
+ differential ()
+ {
+-    message "About to make a differential backup of volume $2."
++    message "diff backup of volume $2 started"
+ 
+     makedifflist "$2"
+     # listing now in TMPLIST1
+     calcdeletions
+     runbackup "$TMPLIST1" "$2"
+-    message "Saving listing file and removing older incremental listings."
++    message "saving listing file and removing older incremental listings"
+     $RM -f $TOBLISTS/$2.incremental*
+     gzip -c "$TMPLIST1" > "$TOBLISTS/$2.differential.gz"
+ }
+@@ -618,7 +617,7 @@
+ # determine size of a diferential backup
+ diffcount ()
+ {
+-    message "About to determine the size of a differential backup of volume $2."
++    message "determining size of diff backup of volume $2"
+ 
+     makedifflist "$2"
+     countbackup "$TMPLIST1"
+@@ -628,13 +627,13 @@
+ # make incremental backup
+ incremental ()
+ {
+-    message "About to make incremental backup of volume $2."
++    message "inc backup of volume $2 started"
+     
+     makeinclist "$2"
+     # listing now in TMPLIST1
+     calcdeletions
+     runbackup "$TMPLIST1" "$2"
+-    message "Saving listing file."
++    message "saving listing file"
+     gzip -c "$TMPLIST1" > \
+ 	"$TOBLISTS/$2.incremental-`date +%Y-%m-%d-%H:%M`.gz"
+ }    
+@@ -643,8 +642,7 @@
+ # count size of incremental backup
+ inccount ()
+ {
+-    message "About to determine the size of an incremental backup of" \
+-	    "volume $2."
++    message "determining size of inc backup of volume $2"
+ 
+     makeinclist "$2"
+     countbackup "$TMPLIST1"
+@@ -654,7 +652,7 @@
+ # generate listing of stuff on backup device
+ verbose ()
+ {
+-    message "Generating report of $BACKUPDEV."
++    message "generating report of $BACKUPDEV"
+     eval "$LISTCMD" || error "listing of $BACKUPDEV cannot be generated."
+ }
+ 
+@@ -670,7 +668,7 @@
+ 
+     cd $startdir || error "bad starting directory $startdir."
+     
+-    message "Restoring $2 from $BACKUPDEV relative to $startdir."
++    message "restoring $2 from $BACKUPDEV relative to $startdir"
+     FILESPEC=$2
+ 
+     eval "$RESTORECMD" || error "restore command failed."
+@@ -720,8 +718,6 @@
+ 
+ ###########################################################################
+ # main prog
+-
+-message "This is tob V$VER."
+ 
+ # trap some sigs
+ trap cleanup 1 2 3 15

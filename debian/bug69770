@@ -1,0 +1,53 @@
+Resent-From: era eriksson <era@iki.fi>
+From: era eriksson <era@iki.fi>
+To: submit@bugs.debian.org
+Subject: Bug#69770: tob: Precedence when multiple tob.rc files exist -- undocumented and (IMHO) wrong
+Date: Wed, 23 Aug 2000 04:49:33 +0300
+
+Package: tob
+Version: 0.14-18
+Severity: normal
+
+The manual page mentions only /etc/tob/tob.rc as a possible name for
+the tob.rc file. The documentation in /usr/share/doc/tob talks about
+three possible locations (but not /etc/tob), but doesn't tell what
+happens if several of them would happen to exist. And as an actual
+matter of fact, the script looks in all four locations:
+
+    # Not configurable settings, used internally:
+    # VER: the version of this script, my job to update it (no quotes here)
+    VER=0.14
+    # RCLIST: list of resource files which tob will search for
+    RCLIST='/etc/tob/tob.rc /etc/tob.rc /usr/etc/tob.rc /usr/local/etc/tob.rc'
+
+(BTW, it doesn't matter whether you quote 0.14 or not. Gratuitous
+quotes rarely do any harm; if you were to change the version number to
+something which contains shell metacharacters, the quotes would be
+necessary. Perhaps it would be a good defensive measure to put them
+there just in case. But I digress.)
+
+The loop which figures out whether one of these files exists will
+always look in all four locations, but use the first one found. (Maybe
+it could be optimised to break out of the loop as soon as the first
+one is found, but that doesn't really make any large difference, other
+than aesthetically perhaps ...)
+
+The reason I think the precedence is wrong is simple: Should't
+/usr/local always "win" over /usr? I.e. as a general rule, if you have
+an installed default /usr/foo but you want to override it locally,
+place an equivalent file in /usr/local/foo. I think tob ought to obey
+this principle, too (and in fact /usr/local/etc/tob.rc should perhaps
+be first on the list).
+
+Hope this helps,
+
+/* era */
+
+
+-- System Information
+Debian Release: 2.0
+Kernel Version: Linux away 2.0.34 #1 Sun Feb 28 21:48:09 EET 1999 i586 unknown
+
+Versions of the packages tob depends on:
+ii  debianutils    1.13.3         Miscellaneous utilities specific to Debian.
+

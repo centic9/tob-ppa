@@ -1,0 +1,484 @@
+
+AFIO(1)                                                   AFIO(1)
+
+NAME
+       afio - manipulate archives and files
+
+SYNOPSIS
+       ...  | afio -o [ options ] archive  : write archive
+       afio -i [ options ] archive  : install archive
+       afio  -t  [ options ] archive  : list table-of-contents of
+       archive
+       afio -r [ options ]  archive   :  verify  archive  against
+       filesystem
+       afio -p [ options ] directory [ ... ] : copy files
+
+       Frequently used options:
+       -v -Z -F -K -n
+       -s volsize -b blocksize -y pattern -Y pattern
+
+DESCRIPTION
+       Afio  manipulates groups of files, copying them within the
+       (collective) filesystem or between the filesystem  and  an
+       afio  archive.  Note  that  afio archives are portable, as
+       they contain only ASCII-formatted header information. They
+       are  also compatible with ASCII cpio(1) archives (ala cpio
+       -c, for GNU cpio(1) also cpio -H odc).
+
+       With -o, reads  pathnames  from  the  standard  input  and
+       writes an archive.
+
+       With  -t,  reads an archive and writes a table-of-contents
+       to the standard output.
+
+       With -i, installs the contents of an archive  relative  to
+       the working directory.
+
+       With  -p,  reads  pathnames  from  the  standard input and
+       copies the files to each directory.
+
+       With  -r,  reads  archive  and  verifies  it  against  the
+       filesystem.  This is useful for verifying tape archives.
+
+       Creates missing directories as necessary, with permissions
+       to match their parents.
+
+       Generates sparse filesystem blocks  (with  lseek(2))  when
+       possible.
+
+       Removes leading slashes from pathnames when reading, writ-
+       ing, and cataloging an archive, unless instructed not  to.
+
+       Supports  multi-volume  archives during interactive opera-
+       tion (i.e., when /dev/tty is accessible and SIGINT is  not
+       being ignored).
+
+                                                                1
+
+AFIO(1)                                                   AFIO(1)
+
+OPTIONS
+       -b size      Read  or write size-character archive blocks.
+                    Suffices of b, k and m  denote  multiples  of
+                    512,    1024   and   1048576,   respectively.
+                    Defaults  to  5120  for  compatibility   with
+                    cpio(1).
+
+       -c count     Buffer count archive blocks between I/O oper-
+                    ations. A large  count  is  recommended  with
+                    streaming magnetic tape drives.
+
+       -d           Don't create missing directories.
+
+       -e bound     Pad  the archive to a multiple of bound char-
+                    acters.  Recognizes the same suffices as  -s.
+                    Defaults  to  1x (the -b block size) for com-
+                    patibility with cpio(1).
+
+       -f           Spawn a child process to  actually  write  to
+                    the  archive;  provides a clumsy form of dou-
+                    ble-buffering.  Requires -s for  multi-volume
+                    archive support.
+
+       -g           Change  to  input  file  directories.  Avoids
+                    quadratic filesystem behavior with long simi-
+                    lar  pathnames.  Requires  all absolute path-
+                    names, including those for the -o archive and
+                    the -p directories.
+
+       -h           Follow symbolic links, treating them as ordi-
+                    nary files and directories.
+
+       -j           Don't generate sparse filesystem blocks.
+
+       -k           Skip corrupt data  at  the  beginning  of  an
+                    archive (rather than complaining about unrec-
+                    ognizable input).
+
+       -l           With -o, write file contents with  each  hard
+                    link.
+
+                    With -t, report hard links.
+
+                    With  -p,  attempt  to link files rather than
+                    copying them.
+
+       -m           Mark  output  files  with  a  common  current
+                    timestamp  (rather than with input file modi-
+                    fication times).
+
+       -n           Protect newer existing files (comparing  file
+                    modification times).
+
+                                                                2
+
+AFIO(1)                                                   AFIO(1)
+
+       -s limit     Restrict   each  portion  of  a  multi-volume
+                    archive to limit characters.  Recognizes  the
+                    same  suffices  as  -b.   Also,  the suffix x
+                    denotes a multiple of the -b block size  (and
+                    must  follow  any  -b specification).  Useful
+                    with  finite-length  devices  which  do   not
+                    return  short  counts at end of media (sigh);
+                    output to magnetic tape typically falls  into
+                    this  category.    When  an  archive is being
+                    read, using -s causes afio to prompt for  the
+                    next  disk  if the specified volume length is
+                    reached.  The -s  will  also  cause  afio  to
+                    prompt  if  there  is  a  premature EOF while
+                    reading the input.  The  special  case  -s  0
+                    will  activate  this  prompting  for the next
+                    disk on EOF without setting a volume  length.
+
+       -u           Report files with unseen links.
+
+       -v           Verbose.  Report  pathnames  as they are pro-
+                    cessed. With -t, gives an ls -l style  report
+                    (including link information).
+
+       -w filename  Treats  each  line  in filename as an -y pat-
+                    tern, see -y.
+
+       -x           Retain file ownership and setuid/setgid  per-
+                    missions.  This is the default for the super-
+                    user; he may use -X to override it.
+
+       -y pattern   Restrict processing of archive read to  names
+                    matching shell pattern pattern.  Specify once
+                    for each pattern to be recognized.  Use -Y to
+                    supply  patterns  which  are  not  to be pro-
+                    cessed.   -Y  overrides  -y  if  a   filename
+                    matches both.  Unless the -S option is given,
+                    leading slashes  are  ignored  when  matching
+                    patterns,     e.g.     /etc/passwd    matches
+                    etc/passwd.  See also -w and -W.
+
+       -z           Print execution statistics. This is meant for
+                    human  consumption;  use by other programs is
+                    officially discouraged.
+
+       -A     Do not turn absolute  paths  into  relative  paths.
+              That is don't remove the leading slash.
+
+       -B     If the -v option is used, prints the byte offset of
+              the start of each file in  the  archive.   If  your
+              tape  drive can start reading at any position in an
+              archive, the output of -B can be useful  for  doing
+
+                                                                3
+
+AFIO(1)                                                   AFIO(1)
+
+              quick selective restores.
+
+       -D controlscript
+              Set  the  control script name to controlscript, see
+              the section on control files below.
+
+       -E filename
+              Read file extensions, separated by whitespace, from
+              filename.   Files  with these extensions are not to
+              be compressed when using the -Z  option.   filename
+              may  contain comments preceded by a #.  If no -E is
+              given, files with the extensions  .Z  .z  .gz  .arc
+              .gif  .zip  .zoo .lha .jpeg .jpg .tpz .taz .tgz and
+              .tzg will not be compressed.
+
+       -F     This is a floppy  disk,  -s  is  required.   Causes
+              floppy  writing  in  O_SYNC mode under Linux.  With
+              kernel version 1.1.54 and above, this  allows  afio
+              to  detect  some floppy errors while writing.  Uses
+              shared memory if compiled in otherwise  mallocs  as
+              needed (a 3b1 will not be able to malloc the needed
+              memory w/o shared memory), afio assumes either  way
+              you can malloc/shmalloc a chunck of memory the size
+              of one disk. Examples:  795k:  3.5"  (720k  drive),
+              316k (360k drive)
+              At the end of each disk this message occurs:
+               Ready for disk [#] on [output]
+                                     (remove the disk when the light goes out)
+               Type "go" (or "GO") when ready to proceed (or "quit" to abort):
+
+       -G factor
+              Specifies  the  gzip(1)  compression  speed factor,
+              used when compressing files  with  the  -Z  option.
+              Factor  1  is the fastest with least compression, 9
+              is slowest  with  best  compression.   The  default
+              value  is 6.  See also the gzip(1) manual page.  If
+              you have a slow machine or a  fast  backup  medium,
+              you  may  want to specify a low value for factor to
+              speed up the backup.  On large (>200k) files, -G  1
+              typically  zips  twice as fast as -G 6, while still
+              achieving a better result  than  compress(1).   The
+              zip  speed  for small files is mainly determined by
+              the invocation time of gzip (1), see the -T option.
+
+       -K     Verify  the  output  against  what is in the memory
+              copy of the disk (-F required).  If the writing  or
+              verifying fails the following menu pops up
+                  [Writing/Verify] of disk [disk #] has FAILED!
+                   Enter 1 to RETRY this disk
+                   Enter 2 to REFORMAT this disk before a RETRY
+
+                   Enter quit to ABORT this backup
+
+                                                                4
+
+AFIO(1)                                                   AFIO(1)
+
+              Currently,  afio will not process the answers 1 and
+              2 in the right way.  The menu above is only  useful
+              in that it signifies that something is wrong.
+
+       -L Log_file_path
+              Specify  the name of the file to log errors and the
+              final totals to.
+
+       -M size
+              Specifies the maximum amount of memory to  use  for
+              the  temporary  storage of compression results when
+              using the -Z  option.  The  default  is  -M  2m  (2
+              megabytes).  If the compressed version of a file is
+              larger than this (or if afio runs  out  of  virtual
+              memory),  gzip(1)  is  run  twice  of the file, the
+              first time to determine the length of  the  result,
+              the  second time to get the compressed data itself.
+
+       -R Disk format command string
+              This is the command that is run when you enter 2 to
+              reformat  the  disk.   The  default  (/bin/fdformat
+              /dev/fd0H1440) can be changed to a  given  system's
+              default by editing the Makefile.
+
+       -S     Do  not ignore leading slashes when matching -y and
+              -Y patterns. See also -A.
+
+       -T threshold
+              Only compress a file when using the  -Z  option  if
+              its  length  is at least threshold.  The default is
+              -T 0k.  This is useful if you have a  slow  machine
+              or  a  fast  backup medium.  Specifying -T 3k typi-
+              cally halves the number of invocations of  gzip(1),
+              saving some 30% computation time, while creating an
+              archive that is only 5% longer.  The combination -T
+              8k  -G  1  typically saves 70% computation time and
+              gives a 20% size increase.  The latter  combination
+              may  be  a good alternative to not using -Z at all.
+              These figures of course depend heavily on the  kind
+              of  files  in  the  archive and the processor - i/o
+              speed ratio on your machine.
+
+       -W filename
+              Treats each line in filename as an -Y pattern,  see
+              -y.
+
+       -Y pattern
+              See -y.
+
+       -Z     Gzip  the  files  on  the  way out, in, and passing
+              without links (valid w/ or w/o -F or -K),  requires
+              gzip(1) to be in your path.
+
+                                                                5
+
+AFIO(1)                                                   AFIO(1)
+
+NOTES
+       Special-case archive names:
+
+          o  Specify  -  to  read  or write the standard input or
+             output, respectively.   This  disables  multi-volume
+             archive handling.
+
+          o  Prefix  a  command  string  to  be  executed with an
+             exclamation mark (!).  The command is executed  once
+             for  each archive volume, with its standard input or
+             output piped to afio.  It is expected to  produce  a
+             zero exit code when all is well.
+
+          o  Use system:file to access an archive in file on sys-
+             tem.  This is really just a special case of pipelin-
+             ing.    It  requires  a  4.2BSD-style  remote  shell
+             (rsh(1C)) and a remote copy of afio.
+
+          o  Anything else specifies a local file or device.   An
+             output  file  will be created if it does not already
+             exist.
+
+       Recognizes obsolete  binary  cpio(1)  archives  (including
+       those  from machines with reversed byte order), but cannot
+       write them.
+
+       Recovers from archive corruption by searching for a  valid
+       magic  number. This is rather simplistic, but, much like a
+       disassembler, almost always works.
+
+       Optimizes pathnames with respect to the current and parent
+       directories.  For example, ./src/sh/../misc/afio.c becomes
+       src/misc/afio.c.
+
+CONTROL FILES
+       Afio archives can contain so-called control files.  Unlike
+       normal  archive entries, a control file in not unpacked to
+       the filesystem.  A control file has a label and some data.
+       When  afio  encounters a control file in the archive it is
+       reading, it will feed the label and data  to  a  so-called
+       control  script.   The  control  script is supplied by the
+       user.  It can perform special actions based on  the  label
+       and data it receives from afio.
+
+       Control  file  labels.   The control file mechanism can be
+       used  for  many  things.   Examples  are  putting  archive
+       descriptions at the beginning of the archive and embedding
+       lists of files to move before unpacking the  rest  or  the
+       archive.
+
+       To distinguish between different uses, the label of a con-
+       trol file should indicate the program that made the contol
+
+                                                                6
+
+AFIO(1)                                                   AFIO(1)
+
+       file  and the purpose of the control file data.  It should
+       have the form
+
+          programname.kindofdata
+
+       where programname is the name of the backup  program  that
+       generated  the control file, and kindofdata is the meaning
+       of the control file data.  Some examples are
+
+          tbackup.movelist  tbackup.updatescript
+          blebberfiler.archivecontents
+          backup_script_of_Joe_User.archivedescription
+
+       The user-supplied control script should look at the  label
+       to  decide  what  to  do with the control data.  This way,
+       control files with unknown labels can be ignored, and afio
+       archives  maintain some degree of portability between dif-
+       ferent programs that restore or index them.
+
+       Control file labels  that  are  intended  to  be  portable
+       between  different backup programs could be defined in the
+       future.
+
+       Making control files.  When making an archive, afio  reads
+       a  stream  containing the names of the files (directories,
+       ...) to put in the archive.  This stream may also  contain
+       `control  file  generators', which are lines with the fol-
+       lowing format:
+
+           //--sourcename label
+
+       Here, the //-- sequence signals that a control file is  to
+       be  made,  sourcename is the path to a file containing the
+       control file data, and label is the  control  file  label.
+       The  sourcename  must  be a regular file or a symlink to a
+       regular file.
+
+       A control file will show up as
+
+          //--CONTROL_FILE/label
+
+       in an archive listing, where label  is  the  control  file
+       label.
+
+       Control  scripts.   A  control  script is supplied to afio
+       with the
+
+         -D controlscript
+
+       command line option.  The controlscript must  be  an  exe-
+       cutable  program.  The script is run whenever afio encoun-
+       ters a control file while doing a -i -t or  -r  operation.
+
+                                                                7
+
+AFIO(1)                                                   AFIO(1)
+
+       Afio  will supply the control file label as an argument to
+       the script.  The script should read the control file  data
+       from  its standard input.  If the script exits with a non-
+       zero exit status, afio will issue a warning message.
+
+       If a contol file is encountered and no -D option is given,
+       afio  will issue a warning message.  To suppress the warn-
+       ing message and ignore all control scripts, -D ""  can  be
+       used.
+
+       An example of a control script is
+
+         #!/bin/sh
+         if [ $1 = "afio_example.headertext" ]; then
+           #the headertext control file is supposed to be packed as the first
+           #entry of the archive
+           echo Archive header:
+           cat -
+           echo Unpack this archive? y/n
+           #stdout is still connected to the tty, read the reply from stdout
+           read yn <&1
+           if [ "$yn" = n ]; then
+             #abort
+             kill $PPID
+           fi
+         else
+           echo Ignoring unknown control file.
+           cat - >/dev/null
+         fi
+
+       Afio  never  compresses the control file data when storing
+       it in an archive, even when the -Z option is used.  When a
+       control  file  is encountered by cpio(1) or an afio with a
+       version number below 2.4.1, the data will be  unpacked  to
+       the  filesystem,  and named CONTROL_FILE/label where label
+       is the control file label.
+
+BUGS
+       There are too many options.
+
+       Restricts pathnames to 1023 characters and 255  meaningful
+       elements.
+
+       There  is  no  sequence  information  within  multi-volume
+       archives.  Input sequence errors generally  masquerade  as
+       data  corruption.   A  solution would probably be mutually
+       exclusive with cpio(1) compatibility.
+
+       Degenerate uses of symbolic links are mangled by  pathname
+       optimization.   For  example, assuming that "usr.src" is a
+       symbolic    link    to    "/usr/src",     the     pathname
+       "usr.src/../bin/cu" is mis-optimized into "bin/cu" (rather
+
+                                                                8
+
+AFIO(1)                                                   AFIO(1)
+
+       than "/usr/bin/cu").
+
+       The Linux floppy drivers below kernel  version  1.1.54  do
+       not allow afio to find out about floppy write errors while
+       writing.  If you are running a kernel below  1.1.54,  afio
+       will happily fail to write to (say) a write protected disk
+       and not report anything wrong!  The only way to  find  out
+       about  write errors in this case is by watching the kernel
+       messages, or by switching on the verify (-K) option.
+
+       The code for -F (and -f and -K ) is a complete  mess.   It
+       will probably work in the normal case, but don't expect it
+       to handle a write/verify error correctly.  If you get such
+       an error, best thing is to restart afio completely.
+
+SEE ALSO
+       cpio(1), find(1), tar(1), compress(1), gzip(1).
+
+AUTHORS
+       Mark Brukhartz ..!ihnp4!laidbak!mdb
+       Jeff Buhrt uunet!sawmill!prslnk!buhrt
+       Dave Gymer dgymer@gdcarc.co.uk
+       Andrew Stevens as@prg.oxford.ac.uk
+       Koen Holtman koen@stack.urc.tue.nl (current maintainer)
+       Anders Baekgaard ab@osiris.cpk.auc.dk
+
+                                                                9

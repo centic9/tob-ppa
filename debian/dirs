@@ -1,0 +1,4 @@
+etc/tob/volumes
+sbin
+usr/sbin
+var/lib/tob

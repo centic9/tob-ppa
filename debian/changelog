@@ -1,0 +1,361 @@
+tob (0.26.cvs.20040226-1) unstable; urgency=low
+
+  * New upstream CVS checkout plus application of the patches from BTS
+    - For tape backups, DELETIONSCOMMAND puts files in / (Closes: #233000)
+    - Improved deletion of old backups 			 (Closes: #231118)
+    - No good way to change backup file name		 (Closes: #231121)
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Thu, 26 Feb 2004 21:01:36 -0600
+
+tob (0.26.cvs.20040201-1) unstable; urgency=low
+
+  * New upstream CVS checkout fixing two open Debian bugs:
+    - Change date format in backups listing (Closes: #227436)
+    - Deletions files: ignore in -backups and delete when no longer used 
+      (Closes: #229040)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon,  2 Feb 2004 22:16:25 -0600
+
+tob (0.26-2) unstable; urgency=low
+
+  * tob: Applied patch by Detlev Brodowski to correct verify (Closes: #227500)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Tue, 13 Jan 2004 21:53:31 -0600
+
+tob (0.26-1) unstable; urgency=low
+
+  * Upgraded to new upstream release:
+  * Addresses the three open Debian bugs (Closes: #213795, #216902, #218681)
+  * Rebuilt original source tarball after removal of four CVS directories
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 21 Dec 2003 19:03:21 -0600
+
+tob (0.25-2) unstable; urgency=low
+
+  * debian/rules: Set /var/lib/tob to group backup with sticky mode
+  * debian/postinst: Similarly, if directory /var/lib/tob still has group
+    root, set it to group backup, mode go+xt,o-r and files therein to o-r
+  * tob: Set umask to 0026 (or UMASK if it was set)  (Closes: #213797)
+  * debian/control: Upgraded Standards-Version: to 3.5.10
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed,  8 Oct 2003 21:10:14 -0500
+
+tob (0.25-1) unstable; urgency=low
+
+  * Upgraded to new upstream release:
+  * debian/control: Upgraded Standards-Version: to 3.5.10
+  * debian/rules: s/dh_installmanpages/dh_installman tob.8/
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sat,  7 Jun 2003 11:50:41 -0500
+
+tob (0.24-1) unstable; urgency=low
+
+  * Upgraded to new upstream release:
+    - tob: Modified to show error message when VERBOSE=no (Closes: #182385)
+
+  * debian/control: Upgraded Standards-Version: to 3.5.9
+  * debian/control: Removed trailing full stop from Description: [lintian]
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed,  7 May 2003 18:25:25 -0500
+
+tob (0.23-1) unstable; urgency=low
+
+  * Upgraded to new upstream release (Closes: #167115, #167117)
+  * debian/tobconv: Removed, now upstream as contrib/tobconv
+  * debian/rules: Set chmod to 0644 for examples from sample-rc/
+  * Touched several files as upstream tarball was created when the new 
+    MAXBACKUPAGE feature was tested on a machine with a clock set to
+    December 30, 2002.  They are still "forward-dated" in the orig.tar.gz.
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Fri, 13 Dec 2002 19:26:10 -0600
+
+tob (0.22-3) unstable; urgency=low
+
+  * tob: Change interpreter to /bin/bash (Closes: #166013)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 23 Oct 2002 22:09:04 -0500
+
+tob (0.22-2) unstable; urgency=low
+
+  * debian/tobconv: Added tob listing file converter contributed by 
+    Raj Manandhar <raj@colsa.com> (Closes: #163999)
+  * debian/tobconv: Added tobconv documentation in POD format
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 13 Oct 2002 12:38:01 -0500
+
+tob (0.22-1) unstable; urgency=low
+
+  * Upgraded to new upstream release (which is identical to upstream 0.21
+    plus our 0.21-1 patches)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 25 Sep 2002 18:25:00 -0500
+
+tob (0.21-1) unstable; urgency=low
+
+  * Upgraded to new upstream release (which is identical to our 0.20-2)
+  * tob: More small patches to ensure an unset BACKUPDIR doesn't hurt us
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 25 Sep 2002 06:43:34 -0500
+
+tob (0.20-2) unstable; urgency=low
+
+  * tob: Wrote small patch to test for BACKUPDIR being set before using 
+    it to override BACKUPDEV (Closes: #161769)
+  * tob: Wrote small patch to make all $RM uses employ -f switch
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 22 Sep 2002 21:33:42 -0500
+
+tob (0.20-1) unstable; urgency=low
+
+  * The 'Three cheers for Stephen van Egmomd <svanegmond@tinyplanet.ca'
+    release --- good old tob now has a new upstream maintainer, after 
+    having been orphaned upstream a mere six and some years.
+  * tob: New upstream code, including a fix for the restore/verify
+    Debian bug report (Closes: #152937)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 15 Sep 2002 17:36:29 -0500
+
+tob (0.14-26) unstable; urgency=low
+
+  * debian/example.exclude: Added real  (Closes: #156103)
+  * tob: Applied small patch by Stephen van Egmond to abort on empty 
+    lines in the exclude specification file (Closes: #152958)
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Sat, 17 Aug 2002 20:12:48 -0500
+
+tob (0.14-25) unstable; urgency=low
+
+  * debian/tob.8: Document doc path as /usr/share/doc/tob (Closes: #154316)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sat,  3 Aug 2002 16:10:28 -0500
+
+tob (0.14-24) unstable; urgency=low
+
+  * debian/example.exclude: Improved .journal entry suggested by 
+    Dan Christensen, added trailing slashes and trailing ^A to mark
+    directories and end-of-word, respectively
+  * debian/control: Add Depends: on afio (Closes: #143330)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Thu, 18 Apr 2002 21:00:38 -0500
+
+tob (0.14-23) unstable; urgency=low
+
+  * debian/example.exclude: As suggested by Dan Christensen, added 
+    "/.journal" to exclude ext3 journals from backups (Closes: #141829)
+  * tob: Applied patch by Dan Christensen to make tob more quiet unless
+    VERBOSE="yes" and print tob first in error logs (Closes: #141830) 
+  * debian/control: Changed Section: from admin to utils
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Tue,  9 Apr 2002 00:00:35 -0500
+
+tob (0.14-22) unstable; urgency=low
+
+  * debian/control: Spelling correction (Closes: #125423)
+  * sample-rc/tob.rc.tar{,z}: Applied '--no-recursion' patch by 
+    Ian Maclaine-cross <ian@ilm.mech.unsw.edu.au> (Closes: #131646)
+  * sample-rc/tob.rc.tar{,z}: Also applied to BACKUPCMDSTDOUT
+  * debian/control: Upgraded to Standards-Version: 3.5.0
+  * debian/conffiles: Added /etc/tob/volumes/example.exclude 
+    and /etc/tob/volumes/example.startdir (lintian)
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Thu, 31 Jan 2002 21:37:48 -0600
+
+tob (0.14-21) unstable; urgency=low
+
+  * tob: Applied patch by Dan Christensen to distinguish between listing
+    files whose names differ only in a substring. (Closes: #76737) 
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sat,  2 Dec 2000 16:50:55 -0600
+
+tob (0.14-20) unstable; urgency=low
+
+  * tob: Applied patch to create deletions file (Closes: #71116)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed,  1 Nov 2000 20:27:57 -0600
+
+tob (0.14-19) unstable; urgency=low
+
+  * tob: Applied patch to ease shell excaping (Closes: #69555)
+  * tob: Applied patch to makefulllist function (Closes: #69768)
+  * tob: Applied patch to makeinclist function (Closes: #69769)
+  * tob: Reordered list of rcfiles (Closes: #69770)
+  * A big thanks to era eriksson <era@iki.fi> for these four reports
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Fri, 20 Oct 2000 23:27:35 -0500
+
+tob (0.14-18) unstable; urgency=low
+
+  * tob.rc: Added --no-recursion to default tar command (Closes: #60269)
+  * tob: Changed FINDCOMMAND spec for ctime from %c to %C@ so that 
+    timezone and daylight savings time changes are ignored (Closes: #60270)
+  * debian/control: Added Build-Depends
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon, 13 Mar 2000 21:51:39 -0500
+
+tob (0.14-17) unstable; urgency=low
+
+  * debian/rules: Adapted to use /usr/share/ following the recommendation
+    on FHS transition from the Technical Committee 
+  * debian/rules: Test for debhelper >= 2.0.40 for FHS compliance
+  * debian/control: Upgraded to Debian Policy 3.0.1
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed,  3 Nov 1999 22:20:13 -0500
+
+tob (0.14-16) unstable; urgency=low
+
+  * tob: Applied patch by mccallis@metalogue.com (Mike McCallister) to
+    fix the '-find' option for files with name that contain backslashes or 
+    spaces.  Note that the patch redefines $FINDPRINTCMD and
+    $SEDNAMESCRIPT; this therefore changes the format of the file(s) in
+    /var/lib/tob/.    
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Fri,  5 Mar 1999 22:42:53 -0500
+
+tob (0.14-15) unstable; urgency=low, Closes=33546
+
+  * tob: Use SEDNAMESCRIPT in runverify(). Thanks to
+    stalex@physlab.sci.ccny.cuny.edu for the patch. (fixes #33546)
+
+  -- Dirk Eddelbuettel <edd@debian.org>  Sun, 21 Feb 1999 20:21:48 -0500
+
+tob (0.14-14) unstable; urgency=low, Closes=31037
+
+  * tob: Added (modified) patch by Richard Hawes <hawesr@gemair.com>
+    for a '-f altdev' option to specify an alternative backup
+    device. (fixes #31037)
+  * tob.8: Changed manual page accordingly
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sat,  9 Jan 1999 10:18:16 -0500
+
+tob (0.14-13) unstable; urgency=low, Closes=29606
+
+  * tob: Changed to use .gz suffix instead of .z (fixes #29606)
+  * postinst: Added code to rename old listings to .gz suffix
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 25 Nov 1998 20:47:15 -0500
+
+tob (0.14-12) frozen unstable; urgency=low, Closes=29314
+
+  * Applied patch to tob.8 by Jim Van Zandt <jrv@vanzandt.mv.com> which
+    corrects some wording, some formating and one factual error (fixes #29314)
+  * Added a contribution by Frank Miles <fpm@u.washington.edu> (and
+    further modified it) to add a new option '-verify <vol>' to
+    check an archive written with afio
+  * Modified tob.8 further to reflect the new option
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 15 Nov 1998 16:43:26 -0500
+
+tob (0.14-11) unstable; urgency=low
+
+  * Corrected non-removal of logfiles for incremental backups when full
+    backups are created. Thanks to Behan Webster <behanw@verisim.com> for 
+    informing me about this bug.
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon, 21 Sep 1998 19:27:12 -0400
+
+tob (0.14-10) unstable; urgency=low
+
+  * Changed tempfile call so that it respects $TEMPDIR (fixes #22899)
+  * Added patch by Francesco Potorti` <F.Potorti@cnuce.cnr.it> to correctly
+    deal with file with backslashes in their name (fixes #22905)
+  * Added example tob.rc file by Francesco Potorti` <F.Potorti@cnuce.cnr.it>
+  * Added --ignore-failed-read to $BACKUPCMD for tar and trailing '|| true' 
+    for afio in example tob.rc. This helps with files that disappear between 
+    list creation and actual backing up as eg lock files or spool files
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed,  9 Sep 1998 20:02:03 -0400
+
+tob (0.14-9) frozen unstable; urgency=low
+
+  * Changed /sbin/tob to create two more temporary variables via tempfile,
+    tob now passes the James Troup security test 
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun, 17 May 1998 16:52:30 -0400
+
+tob (0.14-8) frozen unstable; urgency=low, Closes=22462
+
+  * Changed /sbin/tob to use tempfile(1) and test its result and
+    removed the tempfile call from /etc/tob.rc (fixes #22462)
+  * Removed the 'set -e' from /sbin/tob as we're now testing tempfile 
+  * Updated the configuration file /etc/tob.rc and added more comments
+  * Modified /sbin/tob following a suggestion by Alexander Shumakovitch
+    <shurik@mpim-bonn.mpg.de>, you can now use ${VOLUMENAME} in the
+    setting of ${BACKUPDEV} which allows for storing several different
+    backup files on a mountable filesystem such a Zip or SparQ drive 
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Sat, 16 May 1998 19:01:04 -0400
+
+tob (0.14-7) frozen unstable; urgency=low, Closes=21412
+
+  * Changed /sbin/tob to not use 'set -e' in a small segment of code where
+    a grep(1) might evaluate to false causing tob to abort. 
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Fri, 24 Apr 1998 18:51:44 -0400
+
+tob (0.14-6) frozen unstable; urgency=low, Closes=21412
+
+  * Added dependency on debianutils as tob uses tempfile (fixes #21412) 
+  * Added 'set -e' to force tob to abort on error (fixes #21412)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 22 Apr 1998 21:55:37 -0400
+
+tob (0.14-5) unstable; urgency=low, Closes=21412
+
+  * Add a test clause before file removal (fixes #21412)
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon, 20 Apr 1998 21:52:40 -0400
+
+tob (0.14-4) frozen unstable; urgency=high
+
+  * Changed /etc/tob/tob.rc to use tempfile(1) (fixes #20613)
+  * Changed debian/rules to install the manual page for tob in section 8
+    as the executable in installed in /sbin
+  * Changed debian/rules to use debhelper 
+  * Removed /sbin/tob from debian/conffiles (lintian)
+  * Fixed FSF address in copyright (lintian)
+  * Upgraded to Debian Policy 2.4.0.0 (lintian)
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Mon,  6 Apr 1998 22:34:37 -0400
+
+tob (0.14-3) unstable; urgency=low
+
+  * Changed command for deletion of 'Full' backup logs to more explicit
+    shell command as is done for 'incremental' backups (fixes bug #12766)
+  * Updated /etc/tob/tob.rc with zftape recommendations
+  * Now uses pristine upstream sources in tob_0.14.orig.tar.gz
+
+ -- Dirk Eddelbuettel <edd@debian.org>  Sun,  5 Oct 1997 14:06:41 -0400
+
+tob (0.14-2) unstable; urgency=low
+
+  * Changed Recommends: afio to Suggests: afio (fixes bug #5278)
+
+  * Converted package management files to Debian-1.2 style
+  * Compresses manual pages with gzip -9v
+  * Changed maintainer email address to <edd@debian.org>     
+  
+ -- Dirk Eddelbuettel <edd@debian.org>  Wed, 1 Jan 1997 18:53:15 -0500
+
+Mon May 27 21:24:28 1996  Dirk Eddelbuettel  <edd@miles.econ.queensu.ca>
+
+	* tob-0.14-1 release
+
+	* tob: replaced whoami-based test for root with one that uses the
+	  UID (fixes bug#3117)
+
+Sat May  4 14:46:34 1996  Dirk Eddelbuettel  <edd@miles.econ.queensu.ca>
+
+	* tob-0.14-0 release
+
+	* initial Debian release, added Debian package management files
+
+	* added a man page tob(1)
+
+	* tob: defined TOBLISTS=/var/lib/tob for storing the `lists'
+	  database and log files that tob creates
+	 
+	* tob: changed TOBHOME to /etc/tob; volumes directory and tob.rc
+	  are stored here
+
+      
+	

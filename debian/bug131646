@@ -1,0 +1,56 @@
+From: Ian Maclaine-cross <ian@ilm.mech.unsw.edu.au>
+To: submit@bugs.debian.org
+Subject: Bug#131646: tob: /usr/share/doc/tob/examples/tob.rc.tar{,z} missing flag --no-recursion
+Date: Thu, 31 Jan 2002 16:50:00 +1100
+
+Package: tob
+Version: 0.14-21
+Severity: normal
+
+tar does not work as tob expects without the --no-recursion flag.
+Patches to correct /home/share/doc/tob/examples/tob.rc.tar{,z}
+follow. Please apply the patches or delete the obsolete
+examples from the Debian package.
+
+--- tob.rc.tar.old	Sun May  5 05:35:50 1996
++++ tob.rc.tar	Thu Jan 31 16:42:44 2002
+@@ -6,7 +6,7 @@
+ BACKUPDEV="/tmp/tob.tar"	    # change this into something meaninful
+ # the backup command: some ppl prefer to remove the -v flag, so that stderr
+ # messages don't scroll off the screen
+-BACKUPCMD='tar -c -v -T $FILELIST -f $BACKUPDEV'
++BACKUPCMD='tar -c -v --no-recursion -T $FILELIST -f $BACKUPDEV'
+ BACKUPCMDTOSTDOUT='tar -c -T $FILELIST -f -'
+ LISTCMD='tar -t -f $BACKUPDEV'
+ RESTORECMD='tar -x -v -f $BACKUPDEV "$FILESPEC"'
+
+--- tob.rc.tarz.old	Sun May  5 05:36:28 1996
++++ tob.rc.tarz	Thu Jan 31 16:39:59 2002
+@@ -14,7 +14,7 @@
+ 
+ # the backup command: some ppl prefer to remove the -v flag, so that stderr
+ # messages don't scroll off the screen
+-BACKUPCMD='tar -c -v -z -T $FILELIST -f $BACKUPDEV'
++BACKUPCMD='tar -c -v -z --no-recursion -T $FILELIST -f $BACKUPDEV'
+ BACKUPCMDTOSTDOUT='tar -c -z -T $FILELIST -f -'
+ LISTCMD='tar -t -z -f $BACKUPDEV'
+ RESTORECMD='tar -x -v -z -f $BACKUPDEV "$FILESPEC"'
+
+-- System Information
+Debian Release: 3.0
+Kernel Version: Linux ilm 2.4.12 #1 Fri Nov 9 15:06:28 EST 2001 i586 unknown
+
+Versions of the packages tob depends on:
+ii  debianutils    1.15           Miscellaneous utilities specific to Debian.
+
+--- Begin /etc/tob/tob.rc (modified conffile)
+TOBHOME="/etc/tob"
+BACKUPDEV="/dev/qft0"			
+VERBOSE='yes'				
+BACKUPCMD='afio -o -v -ZG9 -b10k $BACKUPDEV < $FILELIST'	
+BACKUPCMDTOSTDOUT='afio -o -ZG9 -b10k - < $FILELIST'	
+LISTCMD='afio -tv -ZG9 -b10k $BACKUPDEV'
+RESTORECMD='afio -vin -ZG9 -b10k -y"$FILESPEC" $BACKUPDEV'
+
+--- End /etc/tob/tob.rc
+

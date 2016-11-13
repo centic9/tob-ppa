@@ -1,0 +1,12 @@
+# EXample configuration for archiving and restoring with tar/gz
+#
+# For uncompressed backups, use EXT=tar and remove -z from everything.
+
+EXT=tgz
+
+BACKUPCMD='tar -cpz --no-recursion --ignore-failed-read -T $FILELIST -f $BACKUPDEV'
+BACKUPCMDTOSTDOUT='tar -cz  --no-recursion --ignore-failed-read -T $FILELIST -f -'
+LISTCMD='tar -tz -f $BACKUPDEV'
+RESTORECMD='tar -xvzf $BACKUPDEV "$FILESPEC"'
+
+

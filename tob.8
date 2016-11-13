@@ -1,0 +1,315 @@
+T.\" Manual page Copyright (C) 1995-98 Dirk Eddelbuettel <edd@debian.org>
+.\" 1998-11-11 Jim Van Zandt <jrv@vanzandt.mv.com>:  -restore takes
+.\"   both specification and directory arguments,  the specification
+.\"   is *not* a regular expression, and wording and format fixes.
+.\" 15 Nov 1998 Dirk Eddelbuettel <edd@debian.org>
+.\"             documented new option '-verify volume'
+.TH TOB 8 "September 15, 2002" "Debian GNU/Linux"
+.SH NAME
+tob \- Tape Oriented Backup
+.SH SYNOPSIS
+.B tob 
+[
+.BI "-rc " rcfile
+] [
+[
+.BI "-f " alternate_device
+] [
+.B "\-backups"
+] [
+.B "\-check"
+] [ 
+.BI "\-find " specification
+] [
+.BI "\-full " volume
+] [
+.BI "\-fullcount " volume
+] [
+.BI "\-diff " volume
+] [
+.BI "\-diffcount " volume
+] [
+.BI "\-inc " volume 
+] [
+.BI "\-inccount " volume 
+] [
+.BI "\-restore " volume
+[
+.I specification
+] 
+[
+.I directory
+]] [
+.B "\-verbose"
+] [
+.BI "\-verify " volume 
+] 
+.SH DESCRIPTION
+.B tob
+is a simple yet configurable shell-script which, given a set of `volume 
+definitions', runs 
+.BR tar (1) 
+or 
+.BR afio (1) 
+based backups.
+.LP
+.B tob 
+is a general driver for the making and maintaining of backups. It makes full
+backups, differential backups (of the files which were changed since the last
+full backup), incremental backups (of the files which were changed since all
+previous backups), lets you determine the size of the backup before actually
+making it, and maintains listings of made backups.
+.LP
+.B tob
+can create backups on either tape devices or your computer's filesystem.
+Backups stored in your filesystem are automatically deleted once they reach
+a certain age.
+.SH OPTIONS
+.TP
+.BI "\-rc " resourcefile
+This argument selects an alternative resource file instead of the standard
+.I tob.rc
+which is read from the directory
+.IR /etc/tob .
+When present, this argument must be the first on the command line.
+.TP
+.BI "\-f " alternative_device
+This argument selects an alternative device file for the backup or restore
+operation. When present, this argument must be the first, or second after 
+.B "\-rc"
+on the command line.
+.TP
+.B -backups
+This flag will cause 
+.B tob 
+to show which backups were made and when.  This
+information is retrieved from backup listings in the
+.I /var/lib/tob
+directory. Sample output of this command is:
+.br
+ VOLUME: test TYPE: Full         DATE: Mar 7  10:09
+.br
+ VOLUME: test TYPE: differential DATE: Mar 7  11:18
+.br
+ VOLUME: unix TYPE: Full         DATE: Feb 23 18:39
+.TP
+.B -check 
+This argument will cause 
+.B tob 
+to check its environment settings, to scan the
+resource file, and to report errors. When no errors are found, 
+.B tob 
+will report which volumes are defined. This argument may be useful when
+installing and testing 
+.BR tob .
+.TP
+.BI "\-find " specification
+This causes 
+.B tob 
+to scan its listing files and to report any files which match
+\fIspecification\fP. The specification argument is a 
+.BR grep (1)
+expression, and may contain regular expression commands. 
+The
+.B "\-find" 
+command is useful to determine in which backup a given file resides. E.g.,
+the command
+.ce
+tob \-find '.*in' 
+.cd 0
+lists all files ending with "in". The files can then be restored from the
+reported backup.  The command
+.ce 
+tob \-find .
+.cd 0
+will list all files of all volumes.
+.TP
+.BI "\-full " volume
+These arguments start a full backup of 
+.I volume. 
+The volume is defined by its files in 
+.IR /etc/tob/volumes .
+The backup device, backup program etc. are defined in the resource file.
+.TP
+.BI "\-fullcount " volume
+These arguments cause 
+.B tob 
+to report the size (in bytes) of a full backup of
+.I volume. 
+The backup is not actually made; only its size is determined.
+.TP
+.BI "\-diff " volume
+This causes 
+.B tob 
+to start a differential backup of
+.I volume. 
+A differential backup is only possible when a previous full backup
+exists.
+.TP
+.BI "\-diffcount " volume
+These arguments cause 
+.B tob 
+to report the number of bytes which would be backed up during a differential
+backup. This command may be useful to determine whether a differential backup
+should be made yet.
+.TP
+.BI "\-inc " volume 
+This flag causes 
+.B tob 
+to start an incremental backup.  This type is only possible when a full
+backup exists and involves all files which are changed since all the backups
+of the volume.
+.TP
+.BI "\-inccount " volume 
+These arguments cause 
+.B tob 
+to report the number of bytes which would be backed up during an incremental
+backup.
+.TP
+.BI "\-restore " "[volume] [specification]"
+These flags cause 
+.B tob 
+to restore all files which match the specification. The directory argument is
+optional; when present, 
+.B tob 
+restores the files under the mentioned directory. By default the files are
+restored under the current working directory.  The specification may contain
+wildcards; e.g.,
+.I /etc/def* 
+will restore any files which start with 
+"/etc/def". 
+Wildcards may have to be quoted to prevent shell expansion, as in:
+.ce 
+tob \-restore '/etc/def*'
+.cd 0
+.\"The file specification is actually a regular expression; this means that you
+You can, e.g., restore all files which end in "myfile" with the expression 
+.IR "*myfile" ; 
+no matter from which directory the files were backed up.  
+
+Please note that 
+some archivers prefer to get specifications without the leading slash, e.g. 'etc/apache/*'.
+Arj is one example.
+
+.TP
+.B "\-verbose"
+This command will list the contents of the backup device. Use
+.BI "tob \-verbose | grep " "expression"
+to list only files on the backup device which match 
+.IR expression .
+.TP
+.BI "\-verify " volume 
+This command lets 
+.B tob 
+verify the last full backup.  This options is only available for backups made
+with
+.BR afio (1).
+The differences found by 
+.BR afio (1)
+are reported on the standard output.
+.SH FILES
+.TP
+.B /etc/tob/tob.rc
+The 
+.B tob 
+script depends on the variables specified in this resource file during its
+actions.  The format of the resource file is variable=value, defining names
+for various variables which are used by
+.BR tob . 
+Comments can be present in the resource
+file, when preceded by a hash-mark. The resource file follows the standard
+.I /bin/sh 
+syntax. Please see the examples supplied with tob.
+.TP
+.B /etc/tob/volumes
+Files in this directory define backup volumes. A volume 
+.I name 
+is defined by a file
+.IB name .startdir
+which contains the starting directories of the  backup.
+The format of this file is one directory per line. No comments may occur in
+this file.  E.g., if your configuration has two disk filesystems mounted on
+.I /
+and 
+.I /usr 
+respectively, then a backup volume 
+.I bothdisks 
+which selects both filesystems is defined by the following file 
+\fIbothdisks\fP\fB.startdir\fP:
+
+.nf
+	/
+	/usr
+.fi
+
+Since the default behavior of 
+.B tob 
+is to select only files from one device and not to descend different
+devices, in this scenario, if you provide a starting directory of
+.I / ,
+then
+.IR /usr
+would not be backed up.
+
+If your start directories have spaces or special characters in them, they must be escaped for the bash shell, which generally means a backslash in front
+of spaces:
+
+.nf
+   /windows/Documents\\ and\\ Settings/
+.fi
+
+A second file, \fIname\fP\fB.exclude\fP,
+can be created to indicate files to exclude from a backup 
+.IR name . 
+This file is optional.  When present, the exclude file must contain
+grep-expressions of the names to exclude, one name per line.  E.g., for a
+backup named
+.I unix 
+of the whole Unix filesystem it may be a good idea to exclude the temporary
+files from 
+.I /tmp 
+and 
+.IR /usr/tmp . 
+A possible exclude file 
+.IB unix .exclude
+might then contain
+.nf
+	.*/tmp/.*
+.fi
+Please consult 
+.BR grep (1) 
+for regular expressions.
+.TP
+.B /var/lib/tob
+Files in this directory are used to store listings of backup volumes
+made by 
+.BR tob . 
+These files are managed internally by 
+.BR tob.
+Each backup volume has one associated list file. It contains information
+about name and path of each file, the time the file was last changed, its
+owner, group and permissions, the inode, and the number of hard links that
+point to it.
+.TP
+.B "/usr/share/doc/tob/*" 
+On Debian GNU/Linux, more documentation about 
+.B tob 
+is stored here. Please see the text file
+.I tob.txt.gz  
+or the postscript version
+.IR tob.ps.gz 
+for a detailed description of \fBtob\fP.
+.TP
+.B "/usr/share/doc/tob/examples/*" 
+On Debian GNU/Linux, several examples for \fBtob\fP resource files are
+stored here.
+.SH AUTHOR
+Stephen van Egmond <svanegmond@tinyplanet.ca>, based on previous work
+by Karel Kubat <karel@icce.rug.nl>.
+
+.SH "DEBIAN GNU/LINUX MAINTAINER"
+Dirk Eddelbuettel <edd@debian.org>.
+.SH "SEE ALSO"
+.BR tar (1),
+.BR afio (5),
+.BR grep (1).

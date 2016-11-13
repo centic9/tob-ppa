@@ -1,0 +1,21 @@
+Source: tob
+Section: utils
+Priority: optional
+Maintainer: Dirk Eddelbuettel <edd@debian.org>
+Standards-Version: 3.6.1.0
+Build-Depends-Indep: debhelper (>= 3.0.0)
+
+Package: tob
+Architecture: all
+Depends: debianutils (>= 1.6), afio, perl
+Description: Small yet powerful program for tape oriented backups
+ tob is a simple yet configurable shell-script which, given a set of 
+ `volume definitions', runs tar or afio based backups, either for use 
+ with tape drives or floppy disks. You could also mount and unmount 
+ partitions for backups in the pre- and post-commands. tob is a general
+ driver for the making and maintaining of backups.  It makes full 
+ backups, differential backups (of the files which were changed since 
+ the last full backup), incremental backups (of files changed since all
+ previous backups), lets you determine the size of the backup before 
+ actually making it, maintain listings of made backups, make remote 
+ backups and possibly more.

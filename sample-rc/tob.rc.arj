@@ -1,0 +1,22 @@
+# Commands contributed by Tim Janik <timj@gtk.org> for using tob with arj
+#
+# Arj is pretty cool, because it is willing to limit backups strictly to a
+# specific maximum size. Great for burning to CD.
+#
+# These options also turn on arj's "damage protection" measures which appends
+# extra information at the end of the archive to deal with minor data corruptions.
+# 
+# tob -verify however will only test the internal integrity of the archive, not compare the archive
+# to the filesysetm.
+EXT=arj
+
+MAXSIZE=700048576       # 1M=1048576
+
+# you will want to change "arj" to "arj >/dev/null" when you're sure this 
+# works
+BACKUPCMD='arj a -m1 -hk9 -jh65535 -yv$MAXSIZE $BACKUPDEV \!$FILELIST '
+BACKUPCMDTOSTDOUT='true'
+LISTCMD='arj l -yv $BACKUPDEV'
+RESTORECMD='arj x -jr1 -hr -y -v $BACKUPDEV "$FILESPEC"'
+VERIFYCMD='arj t -hr -y -v $BACKUPDEV'
+

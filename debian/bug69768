@@ -1,0 +1,103 @@
+Resent-From: era eriksson <era@iki.fi>
+From: era eriksson <era@iki.fi>
+To: submit@bugs.debian.org
+Subject: Bug#69768: tob: Bugs out with "list creation failed" if nothing to back up
+Date: Wed, 23 Aug 2000 06:18:14 +0300
+
+Package: tob
+Version: 0.14-18
+Severity: normal
+
+Attached is a patch to the makefulllist function in tob which fixes
+the following problems:
+
+  * If the exclude expression would exclude everything from the
+    listing of files to back up, tob would exit with an alarming error
+    message. The actual functionality is preserved (I could not find a
+    better place to handle the case where the list of files is empty)
+    but the error message is more informative, and distinguishes
+    between a program error and a simple case of "nothing to back up".
+
+  * Error checking looks at the exit code from sort, rather than from
+    grep. This is essentially a side effect of the previous fix, but
+    should improve robustness, as sort is somewhat likely to be a
+    critical bottleneck in a low memory / low disk condition.
+
+While I was working on this, I also made changes to fix the following
+less severe problems:
+
+  * The find command line was coded twice, once for the case where the
+    exclude list doesn't contain anything, and once for the other
+    case. In order to improve maintainability, the find command line
+    is coded only once, and the exclude list handling decision is made
+    within the command pipeline itself (at the expense of a cat
+    command in the case when no filtering is to be done).
+
+  * If the exclude list was large (larger than ARG_MAX, 128k on stock
+    Linux installations), you would get an "argument list too long"
+    error where the whole file was interpolated within backticks --
+    merely to see whether the file contains anything. I've coded this
+    differently so that the file is quickly inspected by grep, instead
+    of slurping the whole file in such a dangerous fashion.
+
+The comment pertaining to the 'findswitch' handling should probably be
+edited since it is not (no longer?) clear what it refers to by "the
+paragraph after the next".
+
+Hope this helps,
+
+/* era */
+
+
+--- tob.orig	Wed Aug 23 05:26:45 2000
++++ tob	Wed Aug 23 05:54:57 2000
+@@ -321,25 +321,21 @@
+     #fi
+     #		       'findswitch' also removed from the paragraph after the next
+ 	
+-    excludecontents=""
+-    if [ -f $TOBHOME/volumes/$1.exclude ] ; then
+-	excludecontents=`cat $TOBHOME/volumes/$1.exclude`
+-    fi
++    $nicefindcmd find `cat $TOBHOME/volumes/$1.startdir` $xdevflag \
++	    -printf "$FINDPRINTCMD" | \
++	sed -e 's.\\.\\\\.g' | \
++	# If the exclude file contains non-blank lines, filter against it.
++	# If it is empty, or doesn't exist, just cat stdin to stdout
++	if grep -q -s . $TOBHOME/volumes/$1.exclude ; then
++	    grep -v -f$TOBHOME/volumes/$1.exclude
++	else
++	    cat
++	fi |
++	sort > $TMPLIST || \
++	    error "list creation failed."
+ 
+-    if [ "$excludecontents" != "" ] ; then
+-	$nicefindcmd find `cat $TOBHOME/volumes/$1.startdir` $xdevflag \
+-		-printf "$FINDPRINTCMD" | \
+-	    sed -e 's.\\.\\\\.g' | \
+-	    sort | \
+-	    grep -v -f$TOBHOME/volumes/$1.exclude > $TMPLIST || \
+-		error "list creation failed."
+-    else
+-	$nicefindcmd find `cat $TOBHOME/volumes/$1.startdir` $xdevflag \
+-		-printf "$FINDPRINTCMD" | \
+-	    sed -e 's.\\.\\\\.g' | \
+-	    sort > $TMPLIST || \
+-		error "list creation failed."
+-    fi
++        grep -q . $TMPLIST ||
++	    error "nothing to back up."
+ }
+ 
+ ############################################################################
+
+
+
+-- System Information
+Debian Release: 2.0
+Kernel Version: Linux away 2.0.34 #1 Sun Feb 28 21:48:09 EET 1999 i586 unknown
+
+Versions of the packages tob depends on:
+ii  debianutils    1.13.3         Miscellaneous utilities specific to Debian.
+

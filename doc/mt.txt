@@ -1,0 +1,86 @@
+
+MT(1L)                                                     MT(1L)
+
+NAME
+       mt - control magnetic tape drive operation
+
+SYNOPSIS
+       mt [-f device] operation [count]
+
+DESCRIPTION
+       This  manual  page  documents the tape control program mt.
+       mt performs the given operation, which must be one of  the
+       tape  operations  listed below, on a tape drive.  The path
+       of the tape device to operate on can be given with the  -f
+       or  -t  option.  If neither of those options is given, and
+       the environment variable TAPE is set, it is used.   Other-
+       wise,    a    default   device   defined   in   the   file
+       /usr/include/sys/mtio.h is used.  The device must a  char-
+       acter special file.
+
+       Some  operations optionally take a repeat count, which can
+       be given after the operation name and defaults to 1.
+
+       The available operations are listed below.  Unique  abbre-
+       viations  are  accepted.  Not all operations are available
+       on all systems, or work on all types of tape drives.
+
+       fsf    Forward space count files.  The tape is  positioned
+              on the first block of the next file.
+
+       fsfm   Forward  space count files.  The tape is positioned
+              on the last block of the previous file.
+
+       bsf    Backward space count files.  The tape is positioned
+              on the last block of the previous file.
+
+       bsfm   Backward space count files.  The tape is positioned
+              on the first block of the next file.
+
+       fsr    Forward space count records.
+
+       bsr    Backward space count records.
+
+       weof   Write count EOF marks at current position.
+
+       rewind Rewind the tape.
+
+       offline, rewoffl
+              Rewind the tape  and,  if  applicable,  unload  the
+              tape.
+
+       status Print status information about the tape unit.
+
+       retension
+              Rewind  the  tape,  then  wind it to the end of the
+              reel, then rewind it again.
+
+                                                                1
+
+MT(1L)                                                     MT(1L)
+
+       eod, seod
+              Space to end of valid data.  Used on streamer  tape
+              drives to append data to the logical and of tape.
+
+       erase  Erase the tape.
+
+       setblk Set  the block size of the drive to count bytes per
+              record.
+
+       setdensity
+              Set the tape density code  to  count.   The  proper
+              codes  to  use  with each drive should be looked up
+              from the drive documentation.
+
+       seek   Seek to the count block on the tape.   This  opera-
+              tion  is  available  on  some  Tandberg and Wangtek
+              streamers and some SCSI-2 tape drives.
+
+       tell   Tell the current block on tape.  This operation  is
+              available  on  some  Tandberg and Wangtek streamers
+              and some SCSI-2 tape drives.
+
+       mt exits with a status of 0 if the operation succeeded,  1
+       if the operation or device name given was invalid, or 2 if
+       the operation failed.

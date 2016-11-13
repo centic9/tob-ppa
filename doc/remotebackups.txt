@@ -1,0 +1,41 @@
+From tt2t@p022.tt.st.dlr.deThu Jul 13 13:35:06 1995
+Date: Thu, 22 Jun 1995 15:13:50 +0200 (MET DST)
+From: "S. Zunft" <tt2t@p022.tt.st.dlr.de>
+To: karel@icce.rug.nl
+Subject: tob:remote backup
+
+
+Hey Karel,
+
+first, I find tob a useful tool for comfortable backups.
+
+Here some remarks concerning the remote backup:
+
+* There's no need to "su" to another user on the local machine: An adequate
+  "$HOME/.rhosts" -entry (lets say for the user "tape") on the target machine 
+  should be sufficient. As an example:
+
+  cat /home/tape/.rhosts
+     machine_to_be_backed_up.domain  root
+
+  This allows root on 'machine_to_be_backed_up.domain' a rsh on the target
+  machine.
+
+* With a gnu-versions of tar or cpio and the above '$HOME/.rhosts' -entry 
+  a remote backup is even still simpler:
+	
+     BACKUPDEV="tape@targetmachine.domain:/dev/rmt0"
+
+  (This is how I backup my Linux-box to a tape connected to 
+  an AIX-Tapeserver.)
+  The tar command starts the "rmt"-command for the user "tape" on 
+  the remote machine via rsh and pipes the stream into it. rmt is 
+  usually in /etc and that's where tar looks for it. (However, the 
+  tar that comes with Slackware-Linux expects it to be in /sbin. 
+  In this case one needs an appropriate link on the the target machine
+  or a different tar.) Maybe afio has a similar feature.
+
+Maybe this is of help to you. If not, simply forget it.
+
+Stefan Zunft
+

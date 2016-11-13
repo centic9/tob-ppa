@@ -1,0 +1,20 @@
+# Resource file for tob (version 0.01 and higher), using afio'd compressed
+# archives. I use "ftape.o" as loadable module, hence the PRECMD and POSTCMD.
+# See the docs for a full explanation.
+
+VERBOSE='yes'
+
+BACKUPDEV="/dev/ftape"
+
+# You do not need this if you have kerneld running
+PRECMD="modprobe ftape"
+POSTCMD="rmmod ftape"
+
+# Let's see what we're up to.
+if [ "$TYPE" = "full" ] ; then
+    echo "About to make a FULL backup of volume $VOLUMENAME."
+elif [ "$TYPE" = "diff" ] ; then
+    echo "About to make a DIFFERENTIAL backup of volume $VOLUMENAME."
+elif [ "$TYPE" = "inc" ] ; then
+    echo "About to make INCREMENTAL backup of volume $VOLUMENAME."
+fi

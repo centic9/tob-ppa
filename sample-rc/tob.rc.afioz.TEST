@@ -1,0 +1,25 @@
+# Resource file for tob (version 0.01 and higher), using afio'd compressed
+# archives. I use "ftape.o" as loadable module, hence the PRECMD and POSTCMD.
+# See the docs for a full explanation.
+
+VERBOSE='yes'
+
+cat << ENDMSG
+
+    This TOB resource file is only for TESTING purposes! It will send the
+    output of a backup job to the file "/tmp/tob.out".
+
+ENDMSG
+
+BACKUPDEV="/tmp/tob.out"
+PRECMD=""
+POSTCMD=""
+
+# Let's see what we're up to.
+if [ "$TYPE" = "full" ] ; then
+    echo "About to make a FULL backup of volume $VOLUMENAME."
+elif [ "$TYPE" = "diff" ] ; then
+    echo "About to make a DIFFERENTIAL backup of volume $VOLUMENAME."
+elif [ "$TYPE" = "inc" ] ; then
+    echo "About to make INCREMENTAL backup of volume $VOLUMENAME."
+fi

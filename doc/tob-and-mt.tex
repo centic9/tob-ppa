@@ -1,0 +1,72 @@
+%   $Id: tob-and-mt.tex,v 1.1.1.1 2002/07/28 19:03:52 svanegmond Exp $    
+\documentclass[12pt,a4paper]{article}
+
+\begin{document}
+\pagestyle{empty}
+
+\parskip6pt
+\parindent0pt
+
+\def\cmd#1{\textsf{#1}}
+
+\null
+\vskip-3cm
+\enlargethispage{3cm}
+The following is a short description of a way to use \cmd{tob} combined
+with \cmd{mt}.
+
+Set the name of the tape in the \cmd{TAPE} environment variable like this
+\begin{verbatim}
+export TAPE=/dev/nftape
+\end{verbatim}
+such that we don't have to mention the name of the tape in each
+command. The \cmd{export} command can be put in your
+\verb+/etc/rc.d/rc.local+ file.
+
+Before you use the tape at all it should be formatted. Go to DOS and
+do that or buy preformatted tapes.
+
+Retension the tape before you use it---this is strongly recommended by
+the manufacturer of my tapes:
+\begin{verbatim}
+mt retension
+\end{verbatim}
+
+To make a full backup in the beginning of the tape be sure that the
+position of the tape is at the beginning of the tape
+\begin{verbatim}
+mt rewind
+tob -full <volume>
+\end{verbatim}
+
+If you later want to add to the tape set the position to the end of
+your valid data before you execute the \cmd{tob} command
+\begin{verbatim}
+mt eod
+tob -diff <volume>
+\end{verbatim}
+
+I you want to list the contents of the third backup made on the tape
+position the tape at the beginning of the file after the second
+backup; i.e.\ the third backup
+\begin{verbatim}
+mt rewind
+mt fsf 2
+tob -verbose 
+\end{verbatim}
+
+If you want to list the contents of the last backup on the tape
+position the tape at the beginning of the last file; i.e.\ in the
+beginning of the last backup
+\begin{verbatim}
+mt eod
+mt bsf 1
+tob -verbose 
+\end{verbatim}
+
+Notice that many of the positioning commands of \cmd{mt} does not move
+the tape immediately, the tape is first moved when you execute the read
+or write command for the tape (\cmd{tob} or \cmd{afio} or whatever you
+use directly).
+
+\end{document}

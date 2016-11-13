@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# This is the postinst script for the Debian tob package
+#
+# Sat May 04 1996  Dirk Eddelbuettel  <edd@miles.econ.queensu.ca>           
+
+set -e
+
+#DEBHELPER#
+
+if [ -d /var/lib/tob/lists ]
+then
+	echo "You have old tob lists files in /var/lib/tob/lists."
+	echo "I move them into their new location /var/lib/tob."
+	cd /var/lib/tob; 
+	mv -fv lists/* .
+	rmdir lists
+	echo "Done."
+fi
+
+files=`find /var/lib/tob/ -name \*.z`
+if [ "$files" ]
+then
+    cd /var/lib/tob/
+    echo "Renaming backup listings in /var/lib/tob to the .gz suffix"
+    for i in *.z
+    do
+	name=`basename $i .z`
+	mv -vf ${name}.z ${name}.gz
+    done
+fi
+
+currentgroup=`ls -dl /var/lib/tob/ | awk '{print $4}'`
+if [ "$currentgroup" = "root" ]
+then
+    chgrp backup     /var/lib/tob
+    chmod go+tx,o-r  /var/lib/tob
+    chmod -R o-r     /var/lib/tob
+fi
+
+exit 0
+

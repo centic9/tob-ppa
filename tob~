@@ -1,0 +1,895 @@
+#!/bin/bash
+#
+# tob --- Tape Oriented Backup
+#
+# Originally written by Karel Kubat karel@icce.rug.nl
+# 
+# Debian GNU/Linux version maintained by Dirk Eddelbuettel <edd@debian.org>
+#
+# The modifications for the Debian GNU/Linux 'tob' package are 
+# Copyright 1996-1998 Dirk Eddelbuettel and released under the GNU GPL
+#
+# Now maintained by Stephen van Egmond <svanegmond@tinyplanet.ca>
+# Home page: http://tinyplanet.ca/projects/tob/
+
+# File locations
+TOBLISTS=/var/lib/tob
+TOBHOME=/etc/tob
+
+############################################################################
+# Global settings, most of which can be overruled in the resource file:
+
+# VERBOSE: initial verbosity level, either 'yes' or 'no', may be overruled
+# in a resource file. Initially 'no', which means you won't get messages
+# until the .rc file is sourced. After that, messages may start appearing
+# if you have VERBOSE='yes' in the .rc file.
+VERBOSE='no'
+
+# SINGLEDEVICE: should "find" stay on the same device? Either 'yes' or 'no',
+# can be overruled in resource files. Suggested is 'yes', otherwise "find"
+# will descend /proc, /mnt (when you have mounted stuff), /dos (say a mounted
+# msdos disk) etcetera.
+SINGLEDEVICE='yes'
+
+# NEEDROOT: set to 'yes' if this script should check that only "root" may run
+# backups. Usually that's what you want, because "find" should be able to
+# scan the whole disk.
+NEEDROOT='yes'
+
+# MAXBACKUPAGE: how long backups should be kept before being deleted
+# Tob will delete older and irrelevant backups for you automatically (see
+# the man page for logic).  If you want to keep older backup files for some
+# period of time, indicate here the minimum age in days (n*24 hours)
+# they should be before being deleted.
+# If negative, then backups aren't deleted at all.
+MAXBACKUPAGE=-1
+
+# I think that "find" is a too heavy load, so I prefer to nice it to -19.
+# Besides, I always run backups when I am about to leave, so I don't care
+# how long it takes. Set NICEFIND to 'no' if you don't care about the load
+# or if you want to make the list building slightly faster.
+NICEFIND='yes'
+
+# The default extension used to create and search for archives.
+# Change this if your compressor generates something else, e.g. "arj" or "bz2"
+EXT='gz'
+
+## Creating temporary files in a secure, and tested, manner using tempfile(1)
+## We also use two distinct variables $TMPLIST{1,2} to avoid a race condition
+## that results from using $TMPLIST.{1,2}
+##
+## Dirk Eddelbuettel <edd@debian.org>
+## 16 May 1998
+##
+## Smartened up by Stephen van Egmond <svanegmond@tinyplanet.ca> 2003/10/30
+MKTEMP=`which maketemp`;
+if [ ! -x "$MKTEMP" ]; then
+	MKTEMP=`which mktemp`;
+fi
+
+if [ ! -x "$MKTEMP" ]; then
+   # go looking for it by hand
+	for dir in /bin /sbin /usr/bin/ /usr/sbin/ /usr/local/bin/ /usr/local/sbin; do
+	    if [ -x "$dir/mktemp" ]; then
+	       MKTEMP="$dir/mktemp"
+	       break
+	    fi
+	    if [ -x "$dir/maketemp" ]; then
+	       MKTEMP="$dir/maketemp"
+	       break
+	    fi
+	done
+fi
+
+if [ "$MKTEMP" ]
+then
+    TMPLIST=`$MKTEMP`
+    rc1=$?
+    FILELIST=`$MKTEMP`
+    rc2=$?
+    TMPLIST1=`$MKTEMP`
+    rc3=$?
+    TMPLIST2=`$MKTEMP`
+    rc4=$?
+    if [ $rc1 -ne 0 -o $rc2 -ne 0 -o $rc3 -ne 0 -o $rc4 -ne 0 ]
+    then
+        echo " Fatal tob error: could not create temporary files" >&2
+        exit 1
+    fi
+else
+	TMPLIST=/tmp/tob.$$
+	FILELIST=/tmp/tob.filelist.$$ 
+	TMPLIST1=/tmp/tob.tmplist1.$$
+	TMPLIST2=/tmp/tob.tmplist2.$$
+fi
+
+# The date.  Today.  How about that?
+DATE=`date +'%Y-%m-%d-%H-%M'`
+
+# Where do relevant programs live?
+RM="/bin/rm"
+LS="/bin/ls"
+GREP="/bin/grep"
+
+# Separator Definition: change to " " to get the standard behaviour back,
+# but note that this will break '-find' on files with spaces in their names 
+S="`echo -e \"\\001\"`"
+
+
+# SEDNAMESCRIPT: a script for sed to extract the file name from the list
+SEDNAMESCRIPT='s/\(.*\)'"$S"'\[ctime:\].*/\1/'
+
+
+##########################################################################
+# Pre- and postcommands. E.g., if you use the loadable module ftape.o, you
+# might want the PRECMD 'insmod ftape.o' and the POSTCMD 'rmmod ftape.o'
+# I am leaving this blank, since the default backup device is a file in /tmp.
+# In addition to PRECMD, you have PRECMD1 and PRECMD2 (if you need more
+# preloading), the commands are executed in a series (PRECMD, then PRECMD1,
+# then PRECMD2).
+PRECMD=''
+POSTCMD=''
+
+###########################################################################
+# Not configurable settings, used internally:
+# VER: the version of this script, my job to update it (no quotes here)
+VER=0.26
+
+# RCLIST: list of resource files which tob will search for
+RCLIST='/usr/local/etc/tob.rc /etc/tob/tob.rc /etc/tob.rc /usr/etc/tob.rc'
+
+############################################################################
+# show a message to the screen
+message ()
+{
+    if [ "$VERBOSE" = "yes" ] ; then
+	echo " ""$*" >&2
+    fi
+}
+
+############################################################################
+# print error message and die
+error ()
+{
+    echo " Fatal tob error: ""$*"
+    $RM -f $TMPLIST $TMPLIST1 $TMPLIST2 $FILELIST 
+    postcommand
+    exit 1
+}    
+
+############################################################################
+# determine name of resource file
+getrcname ()
+{
+    found='no'
+    for f in $RCLIST ; do
+	if [ -f $f -a "$found" = "no" ] ; then
+	    message "Resource file: $f"
+	    RCFILE=$f
+	    found='yes'
+	fi
+    done
+
+    if [ "$found" = "no" ] ; then
+	error "no resource file \"tob.rc\" found."
+    fi
+}    
+
+###########################################################################
+# check environment settings
+checkenv ()
+{
+    if [ "$TOBHOME" = "" ] ; then
+	error "variable TOBHOME is undefined"
+    fi
+
+    if [ "$TOBLISTS" = "" ] ; then
+	error "variable TOBLISTS is undefined"
+    fi
+    
+    if [ "$BACKUPDEV" = "" ] ; then
+	error "variable BACKUPDEV is undefined"
+    fi
+    
+    if [ "$EXT" = "" ] ; then
+	error "variable EXT is undefined"
+    fi
+    
+    if [ "$NEEDROOT" = "yes" ] ; then
+	if [ $UID -ne 0 ]; then
+	    error "You need to be root to run tobs!"
+	fi
+    fi
+}
+
+############################################################################
+# read resource files
+readrc ()
+{
+    . "$RCFILE" || error "Syntax error in $RCFILE?"
+    message "Ok, got resource $RCFILE."
+
+    if [ "$ALT_BLK_DEV" != "" ]; then
+	BACKUPDEV="$ALT_BLK_DEV"
+	message "Using alternative backup device $BACKUPDEV"
+    fi
+
+    if [ "$BACKUPDIR" != "" ]; then
+    	error "BACKUPDIR is deprecated: check your config file, and rename it to BACKUPDEV"
+    fi
+
+    if [ -d "$BACKUPDEV" ]; then
+    	BACKUPDIR=$BACKUPDEV
+    	BACKUPDEV="${BACKUPDIR}/${VOLUMENAME}_${DATE}_${TYPE}.${EXT}"
+    elif [ "$BACKUPDEV" = "" ]; then
+        BACKUPDIR="/var/lib/tob"
+    	BACKUPDEV="${BACKUPDIR}/${VOLUMENAME}_${DATE}_${TYPE}.${EXT}"
+    elif [ -f "$BACKUPDEV" -o ! -e "$BACKUPDEV" ]
+        BACKUPDIR=`dirname $BACKUPDEV`
+    fi
+
+    # check that relevant environment vars are set
+    checkenv
+}
+
+###########################################################################
+# clean up all stale files
+cleanup ()
+{
+    message 'Cleaning up.'
+    $RM -f $TMPLIST $TMPLIST1 $TMPLIST2 $FILELIST 
+    postcommand
+}
+
+###########################################################################
+# pre-tob command
+precommand ()
+{
+    if [ "$PRECMD" != "" ] ; then
+	eval "$PRECMD" || error "pre-tob command failed."
+    fi
+    
+    if [ "$PRECMD1" != "" ] ; then
+	eval "$PRECMD1" || error "pre-tob command 1 failed."
+    fi
+    
+    if [ "$PRECMD2" != "" ] ; then
+	eval "$PRECMD2" || error "pre-tob command 2 failed."
+    fi
+}    
+
+###########################################################################
+# post-tob command
+postcommand ()
+{
+    if [ "$POSTCMD" != "" ] ; then
+	localpostcmd=$POSTCMD
+	POSTCMD=""
+	eval "$localpostcmd"
+    fi
+}    
+
+###########################################################################
+# check that no argument follows a flag on the commandline
+noarg ()
+{
+    if [ "$2" != "" ] ; then
+	error "flag $1 needs no arguments."
+    fi
+}    
+
+###########################################################################
+# check that exactly one argument follows a flag
+onearg ()
+{
+    if [ "$2" = "" -o "$3" != "" ] ; then
+	error "flag $1 needs one argument."
+    fi
+}
+
+###########################################################################
+# check that one or two args follow the flag
+oneortwoarg ()
+{
+    if [ "$2" = "" -o "$4" != "" ] ; then
+	error "flag $1 needs one or two arguments."
+    fi
+}    
+
+## check for "--option option_argument" and set the volume name
+## this was suggested by Alexander Shumakovitch <shurik@mpim-bonn.mpg.de>
+##
+## Dirk Eddelbuettel <edd@debian.org> 
+## 16 May 98
+##
+onearg_and_setvolume ()
+{
+    onearg "$@"		# check for correct invocation
+    VOLUMENAME=$2       # store name for usage in .rc file
+}
+
+############################################################################
+# make a list of files to $TMPLIST, given $1 = volume name
+makefulllist ()
+{
+    if [ "$SINGLEDEVICE" = "yes" ] ; then
+	xdevflag="-xdev"
+    else
+	xdevflag=""
+    fi
+
+    if [ "$NICEFIND" = "yes" ] ; then
+	nicefindcmd="nice -19"
+    else
+	nicefindcmd=""
+    fi
+    
+    # check that a startdir file is present
+    if [ ! -f $TOBHOME/volumes/$1.startdir ] ; then
+	error "$TOBHOME/volumes/$1.startdir not found, no such volume."
+    fi
+
+    message "Building list of all files of volume $1.. patience."
+
+    # Let's see if `find' should scan for directories too. Under afio, it
+    # should since the dirs (with their permissions) will get included in the
+    # backup. Under tar, directories should NOT be backed up, since tar will
+    # then auto-descend the directory. I'm still wishing for a tar that won't
+    # recursively archive..
+    # For the FINDSWITCH, thanks go to Jeff Coy Jr.
+
+    # edd 13 Mar 2000: As we added '--no-recursion' to the default BACKUPCMD
+    #                  for the tar case in /etc/tob/tob.rc, the 'findswitch'
+    #		       is no longer needed. Thanks for Dan Christensen for 
+    #		       this suggestion (in Debian bug report #60269)
+    #		       this suggestion (in Debian bug report #60269)
+    #		       this suggestion (in Debian bug report #60269)
+    #echo "$BACKUPCMD" | grep tar > /dev/null
+    #if [ $? -eq 0 ] ; then		# backup command is TAR:
+    #	findswitch="-not -type d"	# avoid directories
+    #else
+    #	findswitch=			# otherwise, include them
+    #fi
+    #		       'findswitch' also removed from the paragraph after next
+
+  $nicefindcmd find `cat $TOBHOME/volumes/$1.startdir` $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
+	sed -e 's.\\.\\\\.g' | \
+	# If the exclude file contains non-blank lines, filter against it.
+	# If it is empty, or doesn't exist, just cat stdin to stdout
+	if grep -q -s . $TOBHOME/volumes/$1.exclude ; then
+	    grep -v -f$TOBHOME/volumes/$1.exclude
+	else
+	    cat
+	fi |
+	sort > $TMPLIST || \
+	    error "list creation failed."
+
+        grep -q . $TMPLIST ||
+	    error "nothing to back up."
+}
+
+############################################################################
+# make a list of a diff backup
+makedifflist ()
+{
+    message "Making list of different files of volume $1.. patience."
+
+    if [ ! -f "$TOBLISTS/$1.Full.gz" ] ; then
+	error "cannot make list of different files: no full backup exists."
+    fi
+
+    # put a full listing of this moment into $TMPLIST:
+    makefulllist "$1"
+
+    # Put previous full listing into $TMPLIST2:
+    gunzip -c $TOBLISTS/$1.Full.gz > $TMPLIST2 ||
+	    error "previous file listing failed."
+
+    diff $TMPLIST $TMPLIST2 |
+	sed -n 's/^< //p' > $TMPLIST1 || \
+	    error "different files listing failed."
+}
+
+############################################################################
+# make listing of an incremental backup
+makeinclist ()
+{
+    message "Making list for incremental backup of volume $1.. patience."
+
+    if [ ! -f "$TOBLISTS/$1.Full.gz" ] ; then
+	error "cannot create incremental list: no full backup exists."
+    fi
+
+    # put a full listing of this moment into $TMPLIST:
+    makefulllist "$1"
+
+    # merge all previous listings of this volume into $TMPLIST2:
+    if gunzip -c $TOBLISTS/$1.* ; then
+        : nothing
+    else
+        error "failure to merge listings of previous backups."
+    fi | 
+    sort > "$TMPLIST2" ||
+        error "failure to merge listings of previous backups."
+    # all that's been backed up now listed and sorted in $TMPLIST2
+
+    diff "$TMPLIST" "$TMPLIST2" |
+	sed -n 's/^< //p' > "$TMPLIST1" || \
+	    error "incremental files listing failed."
+}
+
+############################################################################
+# Calculate a list of the files from previous backups that have been deleted.
+# Assumes that the files from previous backups are in $TMPLIST2 and that
+# the current state of the system is in $TMPLIST.
+calcdeletions()
+{
+    if [ "$DELETIONSCOMMAND" != "" ]; then
+	# To avoid an additional tmp file, use $FILELIST.
+	sed -e "$SEDNAMESCRIPT" < $TMPLIST2 | uniq > $FILELIST
+	sed -e "$SEDNAMESCRIPT" < $TMPLIST |
+	    diff - $FILELIST |
+	    sed -n 's/^> //p' | 
+	    eval $DELETIONSCOMMAND || \
+		error "calculating deletions failed."
+    fi
+}
+
+############################################################################
+# find file in listings of backups, or list all backups
+searchlistings ()
+{
+    cd $TOBLISTS || error "$TOBLISTS directory is missing."
+    files=`$LS -1 | $GREP -v _deletions$`
+
+    if [ "$files" = "" ] ; then
+	message "No backups were made."
+    else
+	for f in $files ; do
+	    vol=`echo $f | sed 's/\..*//g'`
+	    type=`echo $f | sed 's/\.gz//g' | sed 's/[^\.]*\.//g'`
+	    if [ ! -f $TOBHOME/volumes/$vol.startdir ] ; then
+		message "List file $f: there is no corresponding volume." \
+			"Stale list file?"
+	    else
+		echo "$vol $type" | \
+		    awk '{printf ("VOLUME: %-10s TYPE: %-30s ", $1, $2);}'
+		echo -n "DATE: "
+		date -r $f
+		if [ "$2" != "" ] ; then
+		    gunzip -c $f |
+		      awk -F $S '{printf ("%-50s %s\n",\
+				    $1,$3);}' |
+		      grep -e "$2"
+		fi
+	    fi
+	done
+    fi
+}
+
+############################################################################
+# count the size of any backup, given a list file
+countbackup ()
+{
+
+    if [ ! -s "$1" ] ; then
+	echo "0 bytes is estimated size, backup not needed."
+    else
+	sed -e 's.\\\\.\\.g' -e "$SEDNAMESCRIPT" < "$1" > $FILELIST
+	eval "$BACKUPCMDTOSTDOUT" |
+	    wc |
+	    awk '{ if ($3 < 1000)
+		        printf ("Estimated: %d bytes\n",$3); 
+	           else if ($3 < 1000000)
+			printf ("Estimated: %.1f KB\n",$3/1000.0); 
+	           else
+			printf ("Estimated: %.1f MB\n",$3/1000000.0); }' \
+	    || error "backup size estimate failed."
+    fi
+}
+
+############################################################################
+## run a backup verification
+## based on code contributed by Frank Miles <fpm@u.washington.edu>
+##
+## Dirk Eddelbuettel <edd@debian.org>
+## 15 Nov 1998
+runverify ()
+{
+    VOLUMENAME=$2		     # store name for usage in .rc file
+    if [ -d "$BACKUPDIR" ]; then
+	BACKUPDEV=`$LS ${BACKUPDIR}/${VOLUMENAME}_*Full.${EXT}`
+    fi
+    message "Now starting verify program for $BACKUPDEV."
+    ( cd /;
+      eval "$VERIFYCMD" 
+    )
+}
+
+############################################################################
+# run the any form of backup, given a list file as 1st arg and volumename
+# as second arg
+runbackup ()
+{
+    VOLUMENAME=$2	# store name for usage in .rc file
+    
+    message "Now starting backup program to write to $BACKUPDEV."
+    sed -e 's.\\\\.\\.g' -e "$SEDNAMESCRIPT" < "$1" > $FILELIST
+    eval "$BACKUPCMD" || error "backup command failed."
+}
+
+############################################################################
+# check dirs etcetera
+check ()
+{
+    # check that directories are there
+    message "Checking existence of directories."
+    cd $TOBHOME || error "no TOBHOME directory $TOBHOME found."
+    if [ ! -d volumes ] ; then
+	error "$TOBHOME/volumes directory is missing."
+    fi
+    if [ ! -d "$TOBLISTS" ] ; then
+	error "$TOBLISTS directory is missing."
+    fi
+    
+    message "Checking volumes in $TOBHOME/volumes"
+    cd $TOBHOME/volumes || error "no volumes directory."
+
+    # check that startdirs are here
+    startlist=`$LS -1 *.startdir` || error "no startdir files found."
+}
+
+############################################################################
+# List defined volumes
+listvolumes ()
+{
+    message "Listing volumes in $TOBHOME/volumes"
+    cd $TOBHOME/volumes || error "no volumes directory."
+
+    # check that startdirs are here
+    startlist=`$LS -1 *.startdir` || error "no startdir files found."
+    for f in $startlist ; do
+	base=`echo $f | sed 's/\.startdir//g'`
+	exclude=$base.exclude
+
+	echo "Volume \"$base\""
+	message "    starts:   " `cat $f`
+	if [ -f $exclude ] ; then
+	    message "    excludes: " `cat $exclude`
+	fi
+    done
+}
+
+############################################################################
+# show which backups were made and when
+backups ()
+{
+    searchlistings
+}
+
+############################################################################
+# search listings for a given file
+findfile ()
+{
+    searchlistings "$@"
+}    
+
+deleteoldbackups ()
+{
+    if [ -d "$BACKUPDIR" -a "$MAXBACKUPAGE" -ge 0 ]; then
+	UPTO=`basename $BACKUPDEV`
+	cd $BACKUPDIR
+	message "Deleting old backups:"
+	PR=""; [ "$VERBOSE" == "yes" ] && PR="-print"
+	find . -regex ./${VOLUMENAME}_'.*\('$1'\).*' -type f -maxdepth 1 -mtime +$MAXBACKUPAGE ! -name "$UPTO" -exec $RM -f {} \; $PR
+    fi
+}
+
+############################################################################
+# make a full backup
+full ()
+{
+    message "About to make a full backup of volume $2."
+    makefulllist "$2"
+    runbackup $TMPLIST "$2"
+    message "Saving listing file and removing all older listings."
+    $RM -f $TOBLISTS/$2.Full* $TOBLISTS/$2.incremental* $TOBLISTS/$2.differential.*  $TOBLISTS/$2_*_deletions
+    gzip -c $TMPLIST > $TOBLISTS/$2.Full.gz
+    deleteoldbackups 'inc\|diff\|full'
+}
+
+############################################################################
+## verify a backup
+## based on code contributed by Frank Miles <fpm@u.washington.edu>
+##
+## Dirk Eddelbuettel <edd@debian.org>
+## 15 Nov 1998
+verify ()
+{
+    if [ "$VERIFYCMD" != "" ]; 
+    then
+	message "About to verify a full backup of volume $2."
+	message "Using the previously generated file listing."
+	if [ ! -f "$TOBLISTS/$2.Full.gz" ] ; then
+	    message "File listing [$TOBLISTS/$2.Full.gz] not found; regenerate."
+	    makefulllist "$2"
+	    if [ ! -f "$TOBLISTS/$2.Full.gz" ] ; then
+		error "Could not obtain file listing for verification"
+	    fi
+	fi
+	gzip -cd $TOBLISTS/$2.Full.gz > $TMPLIST
+	runverify $TMPLIST "$2"
+    else
+	error "verify command is not configured in tob.rc."
+    fi
+}
+
+############################################################################
+# count size of a full backup
+fullcount ()
+{
+    message "About to determine the size of a full backup of volume $2."
+    makefulllist "$2"
+    message "Now starting backup program to pipe output to counter."
+    countbackup $TMPLIST
+}
+
+############################################################################
+# make a diferential backup
+differential ()
+{
+    message "About to make a differential backup of volume $2."
+
+    makedifflist "$2"
+    # listing now in TMPLIST1
+    calcdeletions
+
+    runbackup "$TMPLIST1" "$2"
+    message "Saving listing file."
+    $RM -f $TOBLISTS/$2.incremental*  $TOBLISTS/$2_inc_deletions
+    gzip -c "$TMPLIST1" > "$TOBLISTS/$2.differential.gz"
+    deleteoldbackups "inc\|diff"
+}
+
+############################################################################
+# determine size of a diferential backup
+diffcount ()
+{
+    message "About to determine the size of a differential backup of volume $2."
+
+    makedifflist "$2"
+    countbackup "$TMPLIST1"
+}
+
+############################################################################
+# make incremental backup
+incremental ()
+{
+    message "About to make incremental backup of volume $2."
+    
+    makeinclist "$2"
+    # listing now in TMPLIST1
+    calcdeletions
+    runbackup "$TMPLIST1" "$2"
+    message "Saving listing file."
+    gzip -c "$TMPLIST1" > \
+	"$TOBLISTS/$2.incremental-`date +%Y-%m-%d-%H:%M`.gz"
+}    
+
+############################################################################
+# count size of incremental backup
+inccount ()
+{
+    message "About to determine the size of an incremental backup of" \
+	    "volume $2."
+
+    makeinclist "$2"
+    countbackup "$TMPLIST1"
+}
+
+############################################################################
+# generate listing of stuff on backup device
+verbose ()
+{
+
+    if [ -d "$BACKUPDIR" ]; then
+      message "Generating report of $BACKUPDIR."
+      for i in `$LS ${BACKUPDIR}/*`; do
+      	BACKUPDEV=$i
+	eval "$LISTCMD"
+      done
+    else
+      message "Generating report of $BACKUPDEV."
+      eval "$LISTCMD" || error "listing of $BACKUPDEV cannot be generated."
+    fi
+}
+
+############################################################################
+# restore file(s) from backup medium
+restore ()
+{
+    if [ "$4" = "" ] ; then
+	startdir=$PWD
+    else
+	startdir=$4
+    fi
+    cd $startdir || error "bad starting directory $startdir."
+    
+    FILESPEC=$3
+    message "Restoring volume $VOLUMENAME files matching $FILESPEC into $startdir."
+
+    if [ -d "$BACKUPDIR" ]; then
+       for i in `$LS ${BACKUPDIR}/${VOLUMENAME}_*.${EXT}`; do
+          BACKUPDEV=$i
+	  eval "$RESTORECMD" && message "restored data from $i"
+       done
+    else
+       eval "$RESTORECMD" || error "restore command failed."
+    fi
+}
+
+############################################################################
+# print usage and die
+usage ()
+{
+    cat << ENDUSAGE
+
+Tape Oriented Backup Utility $VER
+Copyright (c) Stephen van Egmond 2002. All rights reserved.
+Home page: http://tinyplanet.ca/code/tob/
+
+Usage: tob [-rc rcfile] -action [arguments]
+Where: (names in <> must be supplied, names in [] are optional):
+    -rc <rcfile>         : use alternate resource file <rcfile>
+                           (if used, must be FIRST argument)
+    -f  <file|dev>       : use alternate backup device
+                           (if used, must be FIRST or SECOND argument)
+    -backups             : show which backups were made and when
+    -check               : check environment, directories, etc.
+    -volumes             : list defined volumes
+    -full <vol>          : make full backup of volume <vol> (all files)
+    -fullcount <vol>     : determine number of bytes that would be backed up
+    -diff <vol>          : make differential backup of <vol> (all files
+                           since last full backup)
+    -diffcount <vol>     : determine number of bytes that would be backed up
+    -inc <vol>		 : make incremental backup of volume <vol> (all 
+			   files since all previous backups of vol)
+    -inccount <vol>	 : determine number of bytes that would be backed up
+    -restore <vol> [spec] [dir]
+                         : restore files matching <spec> - default all files
+			   from volume <vol> into the current directory or <dir>
+    -find <file>         : search listings of backups for <file> (<file> is a
+                           grep-expression, "tob -find ." shows all)
+    -verbose             : list contents of backup device (use
+                           "tob -verbose | grep file" to list only some
+			   files)
+    -verify <vol>        : verify the last full backup of <vol>
+
+ENDUSAGE
+}
+
+###########################################################################
+# main prog
+
+message "This is tob V$VER."
+
+# trap some sigs
+trap cleanup 1 2 3 15
+
+# try to find resource file
+getrcname
+
+umask 026
+
+# default type argument to RC file is "none"
+TYPE="none"
+
+ready=no
+while [ "$ready" = "no" ] ; do
+    ready=yes
+    case $1 in
+	-rc)
+	    shift
+	    RCFILE=$1
+	    # message "will use alternate resource file $RCFILE."
+	    shift
+	    ready=no
+	    ;;
+	-f)
+	    shift
+            ALT_BLK_DEV=$1
+            # message "will use alternate block device $ALT_BLK_DEV."
+            shift
+            ready=no
+            ;;
+	-check)
+	    noarg "$@"
+	    readrc
+	    precommand
+	    check
+	    ;;
+	-volumes)
+	    noarg "$@"
+	    readrc
+	    precommand
+	    listvolumes
+	    ;;
+	-backups)	    
+	    readrc
+	    precommand
+	    backups
+	    ;;
+	-verify)
+	    onearg_and_setvolume "$@"
+	    readrc
+	    precommand
+	    verify "$@"
+	    ;;
+	-full)
+	    onearg_and_setvolume "$@"
+	    TYPE="full"
+	    readrc
+	    precommand
+	    full "$@"
+	    ;;
+	-fullcount)
+	    onearg_and_setvolume "$@"
+	    readrc
+	    precommand
+	    fullcount "$@"
+	    ;;
+	-diff)
+	    onearg_and_setvolume "$@"
+	    TYPE="diff"
+	    readrc
+	    precommand
+	    differential "$@"
+	    ;;
+	-diffcount)
+	    onearg_and_setvolume "$@"
+	    readrc
+	    precommand
+	    diffcount "$@"
+	    ;;
+	-inc)
+	    onearg_and_setvolume "$@"
+	    TYPE="inc"
+	    readrc
+	    precommand
+	    incremental "$@"
+	    ;;
+	-inccount)
+	    onearg_and_setvolume "$@"
+	    readrc
+	    precommand
+	    inccount "$@"
+	    ;;
+	-verbose)
+	    noarg "$@"
+	    readrc
+	    precommand
+	    verbose
+	    ;;
+	-find)
+	    onearg "$@"
+	    readrc
+	    precommand
+	    findfile "$@"
+	    ;;
+	-restore)
+	    VOLUMENAME=$2
+	    readrc
+	    precommand
+	    restore "$@"
+	    ;;
+	*)
+	    readrc
+	    precommand
+	    usage
+	    ;;
+esac
+done
+
+cleanup
+exit 0
+

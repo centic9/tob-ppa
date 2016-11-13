@@ -1,0 +1,48 @@
+
+# Here is a nice tob.rc file that was contributed by Francesco Potorti`
+# <F.Potorti@cnuce.cnr.it> which shows, among other things, how to have afio
+# automatically verify the archive after it has been written.
+#
+# Dirk Eddelbuettel <edd@debian.org>  
+
+# tob.rc --- resource file for the 'tob' script by Karel Kubat
+#
+# This file is sourced by /sbin/tob.
+#
+# Some site or hardware specific settings may have to be added locally.
+# See the manual page tob(1), the script /sbin/tob, the documentation
+# in /usr/doc/tob/tob.txt.gz or /usr/doc/tob/tob.ps.gz, and the examples 
+# in /usr/doc/examples/tob for details.
+
+TOBHOME="/etc/tob"
+BACKUPDEV="/dev/tape"
+VOLUMENAME=
+SINGLEDEVICE=yes
+VERBOSE=yes
+
+FINDPRINTCMD='%p |tob| ct:%c ow.gr:%u.%g in:%i li:%l pe:%m hl:%n si:%s\n'
+SEDNAMESCRIPT='s/\(.*\) |tob| .*/\1/'
+
+BACKUPCMDTOSTDOUT='afio -o -a -ZG9 -E /etc/afio.extensions -b128k - < $FILELIST'
+LISTCMD='afio -tv -Z -E /etc/afio.extensions $BACKUPDEV'
+RESTORECMD='afio -inv -Z -E /etc/afio.extensions -y"$FILESPEC" $BACKUPDEV'
+
+if [ "$TYPE" = "full" ] ; then
+    PRECMD='mt --file=$BACKUPDEV retension'
+    POSTCMD='mt --file=$BACKUPDEV offline'
+    BACKUPCMD='echo "-- Archiving..."
+	       cat $FILELIST |
+		   afio -o -a -ZG9 -E /etc/afio.extensions - |
+		   dd ibs=1k obs=128k of=$BACKUPDEV 2>&1 |
+		   gawk -F + "/in/  { printf (\"Data to back up: %.1f MB\\n\", \$1*0.001) }
+			      /out/ { printf (\"Backed up: %.1f MB\\n\", \$1*0.128) }"
+	       echo "-- Finished archiving.  Now verifying..."
+	       ( cd /
+		 afio -r -a -Z $BACKUPDEV 2>&1 |
+		   grep -v "var/log/.*[^0-9]\\+\"" |
+		   grep -v "var/log/.*[^.][0-9]\\+\"" |
+		   fgrep -v "var/spool/cron/at" |
+		   fgrep -v "var/spool/smail/"
+	       )
+	       echo "Finished archiving and verifying."'
+fi

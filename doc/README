@@ -1,0 +1,19 @@
+In this directory you'll find miscellaneous docs: the formatted manpages for
+afio and mt, and the output of "tar --help". Hope that it's of some use to
+you.
+
+Also, I've put the file "tob-and-mt.tex" here, a LaTeX2e document that was sent
+to me by Lars Otto (lars@dina.kvl.dk). It describes how you can use mt to
+position tapes, so that you get more backups on one tape.
+
+In a similar vein, Patrick D'Cruze (pdcruze@orac.aust.li.org) sent me an
+excerpt from the ftape install guide. It describes filemarks on tapes, so I've
+included a part from that mail in "filemarks.doc". See if you can use it to
+your advantage. Patrick finishes with: "I hope it applies to qic-02 tapes as
+well.." I have no idea, try it out.
+
+Finally, "remotebackups.txt" is some info by S. Zunft on usernames when
+running remote backups. See if you can use it.
+
+Karel.
+

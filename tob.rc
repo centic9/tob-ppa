@@ -1,0 +1,87 @@
+# tob.rc --- resource file for the Debian GNU/Linux package of the 
+#            `tob' tape-oriented backup program by Karel Kubat
+#
+# This file is sourced by /sbin/tob.
+#
+# Some site or hardware specific settings may have to be added locally.
+# See the manual page tob(1), the comments in the script /sbin/tob, the 
+# documentation in /usr/share/doc/tob/tob.txt.gz and 
+# /usr/share/doc/tob/tob.ps.gz, and the examples from the tob sources 
+# that are installed in the directory /usr/share/doc/tob/examples for 
+# more details.
+#
+# Copyright 1996-1999 Dirk Eddelbuettel <edd@debian.org>  
+
+# Debian stores tob configuration in and below this directory 
+TOBHOME="/etc/tob"			
+
+# Examples for possible backup devices selected via BACKUPDEV
+#
+# /dev/ftape should be a link to your the device corresponding to your tape
+#
+# BACKUPDEV="/dev/ftape"			
+#
+# or use the tape drive on another networked box 'groucho.my.net'
+# BACKUPDEV="groucho.my.net:/dev/ftape"	
+#
+# or use a filesystem-based backup:
+BACKUPDEV="/var/backups/"
+
+# If you're using a filesystem backup, tob will clean out old backups
+# for you once they reach a certain age.  Set that age (in days) here:
+MAXBACKUPAGE=5
+
+# PRECMD and POSTCMD are not needed for loading/unloading of the ftape
+# modules if the following two lines are added to /etc/conf.modules so that 
+# kerneld can load the ftape module (also see the documentation for zftape)
+#	alias char-major-27 zftape
+#	pre-install ftape /sbin/swapout 5
+#
+# Otherwise you can explicitly load and unload the ftape module:
+# PRECMD=`modprobe ftape`		# ftape module loading on demand
+# POSTCMD=`rmmod ftape`			# ftape module removal on demand
+# 
+# another possibility is call swapout so that dmalloc() doesn't fail 
+# [ no longer needed as the ftape package adds this to /etc/conf.modules ]
+# PRECMD='swapout -m 5'
+#
+# I use the following command to retension the tape before I backup:
+# PRECMD='ftmt -f $BACKUPDEV retension 2>/dev/null; echo Tape retensioned'
+#DELETIONSCOMMAND='cat >$BACKUPDIR/${VOLUMENAME}_${DATE}_${TYPE}_deletions'
+# Debian bug report #233300 suggests
+DELETIONSCOMMAND='cat >${TOBLISTS}/${VOLUMENAME}_${DATE}_${TYPE}_deletions'
+
+# let tob be explicit
+VERBOSE='yes'				
+
+# Should find be nice'd ?
+NICEFIND='no'
+
+# The amount of RAM devoted to buffering I/O blocks.  
+# Good for streaming tape drives.
+BUFFERBLK="-c 1000"
+
+# The amount of data to be written with each block.  The normal
+# amount for the {zftape} device driver should be given here:
+BLOCKSIZE="-b 10240"
+
+# The GZip compression factor (default=6; range 1-9; 9 is highest)
+GZIPFACTOR='-G 9 -Z '
+
+# These commands select afio as the backup engine with the selected 
+# compression and block sizes, more examples for tob and afio use are 
+# provided in /usr/doc/tob/examples
+BACKUPCMD='afio $BLOCKSIZE $BUFFERBLK $GZIPFACTOR -o $BACKUPDEV < $FILELIST'
+BACKUPCMDTOSTDOUT='afio $BLOCKSIZE $BUFFERBLK $GZIPFACTOR -o - < $FILELIST'
+LISTCMD='afio $BLOCKSIZE $BUFFERBLK -t $BACKUPDEV'
+RESTORECMD='afio $BLOCKSIZE $BUFFERBLK $GZIPFACTOR -viny"$FILESPEC" $BACKUPDEV'
+VERIFYCMD='afio $BLOCKSIZE $BUFFERBLK $GZIPFACTOR -r $BACKUPDEV'
+
+# Identify the extension produced by BACKUPCMD during filesystem backups
+# Note: if you change this, you might have to mop up backups with the old
+# extension yourself.
+EXT=gz
+
+
+
+

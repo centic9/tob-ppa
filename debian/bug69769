@@ -1,0 +1,88 @@
+Resent-From: era eriksson <era@iki.fi>
+From: era eriksson <era@iki.fi>
+To: submit@bugs.debian.org
+Subject: Bug#69769: tob: Possible minor security problem with use of two temp files
+Date: Wed, 23 Aug 2000 05:20:17 +0300
+
+Package: tob
+Version: 0.14-18
+Severity: normal
+
+There is an -- admittedly theoretical -- risk that somebody could
+place unwanted content in the file containing a listing for
+determining what to backup during the execution of tob.
+
+In the makeinclist function, a for loop successively unzips listings
+and appends the results to TMPLIST1. If this file is created with lax
+permissions, or somebody manages to (get really lucky and) guess the
+file's name before the first write, an attacker could place unwanted
+content in this file.
+
+Fortunately, the consequences of this are probably not very dire, but
+yet more fortunately still, the for loop can easily be converted so
+that the use of the temporary file is avoided altogether. A patch
+which does this is included below.
+
+Note that tob is frequently expected to run as root, and does not set
+the umask or the PATH. While a responsible admin should already have
+taken care of these things, it would be good practice to explicitly
+set them within the script. (This I have not done in this diff.)
+
+Incidentally, I also took the liberty to fix a couple of grep | sed
+snippets into just a sed each. Generally speaking, "grep something |
+trivial sed script" can always be expressed without the grep and
+instead a correspondingly slightly less trivial sed script. (This is
+the first chunk in the diff, and also the very last small difference
+in the last chunk.)
+
+Hope this helps,
+
+/* era */
+
+
+--- tob.orig	Tue Aug 22 08:22:51 2000
++++ tob	Wed Aug 23 05:13:03 2000
+@@ -353,8 +353,7 @@
+     makefulllist "$1"
+     gunzip -c $TOBLISTS/$1.Full.gz |
+ 	diff $TMPLIST - |
+-	grep '^<' |
+-	sed 's/^< //g' > $TMPLIST1 || \
++	sed -n 's/^< //p' > $TMPLIST1 || \
+ 	    error "different files listing failed."
+ }
+ 
+@@ -372,17 +371,17 @@
+     # current state listing in $TMPLIST
+ 
+     # merge all previous listings of this volume
+-    $RM -f "$TMPLIST1"
+-    for f in $TOBLISTS/$1* ; do
+-	gunzip -c < "$f" >> "$TMPLIST1" || \
+-	    error "failure to merge listings of previous backups."
+-    done
+-    sort "$TMPLIST1" > "$TMPLIST2"
++    if gunzip -c $TOBLISTS/$1* ; then
++        : nothing
++    else
++        error "failure to merge listings of previous backups."
++    fi | 
++    sort > "$TMPLIST2" ||
++        error "failure to merge listings of previous backups."
+     # all that's been backed up now listed and sorted in $TMPLIST2
+ 
+     diff "$TMPLIST" "$TMPLIST2" |
+-	grep '^<' |
+-	sed 's/^< //g' > "$TMPLIST1" || \
++	sed -n 's/^< //p' > "$TMPLIST1" || \
+ 	    error "incremental files listing failed."
+ }
+ 
+ 
+-- System Information
+Debian Release: 2.0
+Kernel Version: Linux away 2.0.34 #1 Sun Feb 28 21:48:09 EET 1999 i586 unknown
+
+Versions of the packages tob depends on:
+ii  debianutils    1.13.3         Miscellaneous utilities specific to Debian.
+

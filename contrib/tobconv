@@ -1,0 +1,73 @@
+#!/usr/bin/perl -w
+
+# Contributed by Raj Manandhar <raj@colsa.com> on 9 Oct 2002
+# POD documentation added by edd@debian.org on 12 Oct 2002
+
+# Save this as tobconv. Move the old files and pipe them into this script with commands like
+
+# mkdir /var/lib/tob/old
+# mv /var/lib/tob/* /var/lib/tob/old
+# zcat /var/lib/tob/old/all.Full.gz | tobconv | gzip -c > /var/lib/tob/all.Full.gz
+# zcat /var/lib/tob/old/all.incremental-2002-06-24-11:02.gz | tobconv | gzip -c > /var/lib/tob/all.incremental-2002-06-24-11:02.gz
+
+use Time::Local;
+my %months;
+$months{"Jan"}=0;
+$months{"Feb"}=1;
+$months{"Mar"}=2;
+$months{"Apr"}=3;
+$months{"May"}=4;
+$months{"Jun"}=5;
+$months{"Jul"}=6;
+$months{"Aug"}=7;
+$months{"Sep"}=8;
+$months{"Oct"}=9;
+$months{"Nov"}=10;
+$months{"Dec"}=11;
+
+while (defined($line=<>)) {
+    my ($path, $rest) = split(/\001/, $line);
+    my @words = split(" ", $rest, 7);
+    my ($h, $m, $s) = split(':', $words[4]);
+    my $t = timelocal($s, $m, $h, $words[3],
+		      $months{$words[2]}, $words[5]);
+    print("$path\001$words[0] $t $words[6]");
+}
+
+=head1 NAME
+
+tobconv - Convert tob listing files from pre-0.2 to post-0.2 format
+
+=head1 SYNOPSIS
+ 
+ ... | tobconv | ...
+
+=head1 OPTIONS
+
+There are no options to B<tobconv>.
+
+=head1 DESCRIPTION
+
+With version 0.20, B<tob> has changed the format of its listing files. 
+The B<tobconv> tool can be used to convert older listing files to the 
+new format.
+
+=head1 EXAMPLE 
+
+  mkdir /var/lib/tob/old
+  mv /var/lib/tob/* /var/lib/tob/old
+  zcat /var/lib/tob/old/all.Full.gz | tobconv | \
+          gzip -c > /var/lib/tob/all.Full.gz
+  zcat /var/lib/tob/old/all.incremental-2002-06-24-11:02.gz | \
+          tobconv | gzip -c > \
+          /var/lib/tob/all.incremental-2002-06-24-11:02.gz
+
+=head1 SEE ALSO
+
+F<tob.8>
+
+=head1 AUTHOR
+
+B<tobconv> was contributed by Raj Manandhar <raj@colsa.com>.
+
+=cut
