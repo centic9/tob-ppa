@@ -62,7 +62,7 @@ EXT='gz'
 ## 16 May 1998
 ##
 ## Smartened up by Stephen van Egmond <svanegmond@tinyplanet.ca> 2003/10/30
-MKTEMP=`which maketemp`;
+MKTEMP=`which maketemp 2> /dev/null`;
 if [ ! -x "$MKTEMP" ]; then
 	MKTEMP=`which mktemp`;
 fi
@@ -169,10 +169,6 @@ getrcname ()
 	    found='yes'
 	fi
     done
-
-    if [ "$found" = "no" ] ; then
-	error "no resource file \"tob.rc\" found."
-    fi
 }    
 
 ###########################################################################
@@ -206,6 +202,9 @@ checkenv ()
 # read resource files
 readrc ()
 {
+    if [ "$RCFILE" = "none" ] ; then
+    	error "no resource file \"tob.rc\" found."
+    fi
     . "$RCFILE" || error "Syntax error in $RCFILE?"
     message "Ok, got resource $RCFILE."
 
@@ -785,6 +784,7 @@ getrcname
 
 umask 026
 
+RCFILE="none"
 # default type argument to RC file is "none"
 TYPE="none"
 
@@ -795,7 +795,7 @@ while [ "$ready" = "no" ] ; do
 	-rc)
 	    shift
 	    RCFILE=$1
-	    # message "will use alternate resource file $RCFILE."
+	    message "will use alternate resource file $RCFILE."
 	    shift
 	    ready=no
 	    ;;
