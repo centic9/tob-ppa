@@ -1,0 +1,49 @@
+# Use rclone to treat cloud storage as a the backup device. This solution works
+# on Linux systems that currently don't have very good google-drive clients.
+# This requires setting BACKUPDEV to a scratch folder, where the archive is
+# initially created, then sent to the cloud. So a limitation is that you need
+# enough free space on some partition to create your backup.
+
+# Where this files lives as well as the volumes subdir
+TOBHOME="/home/cburns/etc/tob"			
+# Where tob will keep its lists
+TOBLISTS=/home/cburns/toblists
+# Backup to the RAID (/data is a link to /data001 or /data002)
+BACKUPDEV="/data/cburns/Backups"
+# The cloud location of your archives in the format recognized by rclone
+CLOUDLOC="Gdrive:Backup/TOB"
+
+# Clear out old stuff. Make this smaller if space is premium.
+MAXBACKUPAGE=-1
+
+# If $BACKUPDEV is a directory:
+# 
+DELETIONSCOMMAND='cat >${BACKUPDEV}/${VOLUMENAME}_${DATE}_${TYPE}_deletions'
+
+# let tob be explicit
+VERBOSE='yes'				
+
+# Should find be nice'd ?
+NICEFIND='no'
+
+# File extension for archives
+EXT=tgz
+
+# BACKUPDEV is the actual name of the archive file. Use rclone to copy it to 
+# cloud drive after it's made, then replace with stub file containing location
+# on the cloud
+BACKUPCMD='tar -cpz --no-recursion --ignore-failed-read -T $FILELIST -f $BACKUPDEV && rclone move $BACKUPDEV $CLOUDLOC && echo "${CLOUDLOC}/$(basename $BACKUPDEV)" > $BACKUPDEV'
+
+BACKUPCMDTOSTDOUT='tar -cz  --no-recursion --ignore-failed-read -T $FILELIST -f -'
+
+# Listing all archive contents would require downloading them all from the
+# cloud. I don't think we want to do this, so disable it with error message.
+# But if you want to be able to do this, uncomment next line.
+# LISTCMD='cp ${BACKUPDEV} ${BACKUPDEV}.log && rclone copy $(cat ${BACKUPDEV}.loc) $(dirname $BACKUPDEV) && tar -tz -f $BACKUPDEV && mv ${BACKUPDEV}.loc ${BACKUPDEV}'
+LISTCMD='echo "verbose listing not supported on the cloud"'
+
+# BACKUPDEV is the fully qualified name of the archive. Get it from Gdrive and
+# un-archive it, then replace with stub file when we're done.
+RESTORECMD='cp ${BACKUPDEV} ${BACKUPDEV}.loc && rclone copy $(cat ${BACKUPDEV}.loc) $(dirname $BACKUPDEV) && tar -xvzf $BACKUPDEV "$FILESPEC" && mv ${BACKUPDEV}.loc ${BACKUPDEV}'
+
+NEEDROOT='no'
