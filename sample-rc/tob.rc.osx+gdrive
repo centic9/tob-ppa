@@ -1,0 +1,41 @@
+# Where this files lives as well as the volumes subdir
+TOBHOME="/Users/cburns/etc/tob"			
+# Where tob will keep its lists
+TOBLISTS="/Users/cburns/toblists"
+# Backup to the Google Drive mount point
+BACKUPDEV="/Volumes/GoogleDrive/My Drive/Backup/TOB/kepler"
+
+# Clear out old stuff. Make this smaller if space is premium.
+MAXBACKUPAGE=-1
+
+# If $BACKUPDEV is a directory:
+# 
+DELETIONSCOMMAND='cat >${BACKUPDEV}/${VOLUMENAME}_${DATE}_${TYPE}_deletions'
+
+# let tob be explicit
+VERBOSE='yes'				
+
+# Should find be nice'd ?
+NICEFIND='no'
+
+# File extension for archives
+EXT=tgz
+
+# BACKUPDEV is the actual name of the archive file. 
+# Note the double-quotes around $BACKUPDEV...  that's to deal with the fact
+# that there is a space in $BACKUPDEV (My Drive)
+BACKUPCMD='tar -cpz --no-recursion -T $FILELIST -f "$BACKUPDEV"'
+
+BACKUPCMDTOSTDOUT='tar -cz  --no-recursion -T $FILELIST -f -'
+
+# This command will be run on the cloud drive, so could be super-slow.
+# Issue a warning message, then continue.
+LISTCMD='echo "Warning: Listing archive from the cloud may take a LONG time"; tar -tz -f "$BACKUPDEV"'
+
+# BACKUPDEV is the fully qualified name of the archive. Again, use double-quotes
+# to ensure paths with spaces in them are interpreted correctly. And in OSX,
+# and empty FILESPEC is not allowed, need to default to "*"
+RESTORECMD='tar -xvzf "$BACKUPDEV" "${FILESPEC:-*}"'
+
+# Assume this is being run in user-space
+NEEDROOT='no'
