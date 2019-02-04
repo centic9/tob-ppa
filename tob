@@ -111,6 +111,9 @@ RM="/bin/rm"
 LS="/bin/ls"
 GREP="/bin/grep"
 
+# Find the appropriate "find". Use 'gfind' if available
+FIND=`which gfind` || FIND="find"
+
 # Separator Definition: change to " " to get the standard behaviour back,
 # but note that this will break '-find' on files with spaces in their names 
 S="`echo -e \"\\001\"`"
@@ -347,7 +350,7 @@ makefulllist ()
     #		       'findswitch' also removed from the paragraph after next
 
   cat $TOBHOME/volumes/$1.startdir | \
-  xargs -i $nicefindcmd find {} $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
+  xargs -I{} $nicefindcmd $FIND {} $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
 	sed -e 's.\\.\\\\.g' | \
 	# If the exclude file contains non-blank lines, filter against it.
 	# If it is empty, or doesn't exist, just cat stdin to stdout
@@ -586,7 +589,7 @@ deleteoldbackups ()
 	cd `dirname $BACKUPDEV`
 	message "Deleting old backups from `dirname $BACKUPDEV`:"
 	PR=""; [ "$VERBOSE" == "yes" ] && PR="-print"
-	find . -regex ./${VOLUMENAME}_'.*\('$1'\).*' -type f -mtime +$MAXBACKUPAGE ! -name "$UPTO" -exec $RM -f {} \; $PR
+	$FIND . -regex ./${VOLUMENAME}_'.*\('$1'\).*' -type f -mtime +$MAXBACKUPAGE ! -name "$UPTO" -exec $RM -f {} \; $PR
     fi
 }
 
