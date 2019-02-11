@@ -1,3 +1,9 @@
+tob (0.26.cvs.20040226-7ubuntu0~ppa5) bionic; urgency=medium
+
+  * Build for Bionic.
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Mon, 11 Feb 2019 21:22:30 +0100
+
 tob (0.26.cvs.20040226-7ubuntu0~ppa4) xenial; urgency=medium
 
   * Adjust packagings, executable, remove files that are not needed.
