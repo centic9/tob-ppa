@@ -1,0 +1,49 @@
+# Sample tob.rc file for use with rclone mount sub-command. 'rclone mount'
+# lets you mount your cloud server as a local mount point. This requires
+# a pretty new version of rclone and also the FUSE libraries. If you system
+# doesn't have them, talk to your systems admin.
+
+# Where this file lives as well as the volumes subdir
+TOBHOME="/home/cburns/etc/tob"			
+# Where tob will keep its lists
+TOBLISTS="/home/cburns/toblists"
+# This should be the mount point you've setup with "rclone mount". For example,
+# if your cloud server is gdrive: and you've created a 'backup' folder as
+# the mount point:
+#    $ rclone mount gdrive:Backup/TOB /home/cburns/backup
+BACKUPDEV="/home/cburns/backup"
+
+# Clear out old stuff. Make this positive if space is premium.
+MAXBACKUPAGE=-1
+
+# If $BACKUPDEV is a directory:
+# 
+DELETIONSCOMMAND='cat >${BACKUPDEV}/${VOLUMENAME}_${DATE}_${TYPE}_deletions'
+
+# let tob be explicit
+VERBOSE='yes'				
+
+# Should find be nice'd ?
+NICEFIND='no'
+
+# File extension for archives
+EXT=tgz
+
+# BACKUPDEV is the actual name of the archive file. 
+# Note the double-quotes around $BACKUPDEV...  that's to deal with the fact
+# that there is a space in $BACKUPDEV (My Drive)
+BACKUPCMD='tar -cpz --no-recursion -T $FILELIST -f "$BACKUPDEV"'
+
+BACKUPCMDTOSTDOUT='tar -cz  --no-recursion -T $FILELIST -f -'
+
+# This command will be run on the cloud drive, so could be super-slow.
+# Issue a warning message, then continue.
+LISTCMD='echo "Warning: Listing archive from the cloud may take a LONG time"; tar -tz -f "$BACKUPDEV"'
+
+# BACKUPDEV is the fully qualified name of the archive. Again, use double-quotes
+# to ensure paths with spaces in them are interpreted correctly. And in OSX,
+# and empty FILESPEC is not allowed, need to default to "*"
+RESTORECMD='tar -xvzf "$BACKUPDEV" "${FILESPEC:-*}"'
+
+# Assume this is being run in user-space
+NEEDROOT='no'

@@ -62,7 +62,7 @@ EXT='gz'
 ## 16 May 1998
 ##
 ## Smartened up by Stephen van Egmond <svanegmond@tinyplanet.ca> 2003/10/30
-MKTEMP=`which maketemp`;
+MKTEMP=`which maketemp 2> /dev/null`;
 if [ ! -x "$MKTEMP" ]; then
 	MKTEMP=`which mktemp`;
 fi
@@ -110,6 +110,9 @@ DATE=`date +'%Y-%m-%d-%H-%M'`
 RM="/bin/rm"
 LS="/bin/ls"
 GREP="/bin/grep"
+
+# Find the appropriate "find". Use 'gfind' if available
+FIND=`which gfind` || FIND="find"
 
 # Separator Definition: change to " " to get the standard behaviour back,
 # but note that this will break '-find' on files with spaces in their names 
@@ -169,10 +172,6 @@ getrcname ()
 	    found='yes'
 	fi
     done
-
-    if [ "$found" = "no" ] ; then
-	error "no resource file \"tob.rc\" found."
-    fi
 }    
 
 ###########################################################################
@@ -206,6 +205,9 @@ checkenv ()
 # read resource files
 readrc ()
 {
+    if [ "$RCFILE" = "none" ] ; then
+    	error "no resource file \"tob.rc\" found."
+    fi
     . "$RCFILE" || error "Syntax error in $RCFILE?"
     message "Ok, got resource $RCFILE."
 
@@ -348,7 +350,7 @@ makefulllist ()
     #		       'findswitch' also removed from the paragraph after next
 
   cat $TOBHOME/volumes/$1.startdir | \
-  xargs -i $nicefindcmd find {} $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
+  xargs -I{} $nicefindcmd $FIND {} $xdevflag  -printf '%p'$S'[ctime:] %C@ [owner/group:]  %u:%g' \( \( -fstype fat -or -fstype vfat \) -and -printf ' [mtime:] %T@' -or -printf ' [inode:] %i' \) -printf ' [linkto:] %l [perm:] %m [hardlinks:] %n\n' | \
 	sed -e 's.\\.\\\\.g' | \
 	# If the exclude file contains non-blank lines, filter against it.
 	# If it is empty, or doesn't exist, just cat stdin to stdout
@@ -495,7 +497,7 @@ runverify ()
     VOLUMENAME=$2		     # store name for usage in .rc file
 
     if [ -d "$BACKUPDEV" ]; then
-        BACKUPDEV=(`$LS ${BACKUPDEV}/${VOLUMENAME}_*full.${EXT}`)
+        BACKUPDEV=(`$LS "${BACKUPDEV}"/${VOLUMENAME}_*full.${EXT}`)
         if [ ${#BACKUPDEV[*]} -ne 1 ]; then
             error "More than one full backup to choose from.  Use -f to select one."
         fi
@@ -583,11 +585,11 @@ deleteoldbackups ()
     # Since runbackups has run, $BACKUPDEV is either a file or a device.
     # We only do deletions when it is a file.
     if [ "$MAXBACKUPAGE" -ge 0 -a -f "$BACKUPDEV" ]; then
-	UPTO=`basename $BACKUPDEV`
-	cd `dirname $BACKUPDEV`
-	message "Deleting old backups from `dirname $BACKUPDEV`:"
+	UPTO=`basename "$BACKUPDEV"`
+	cd "`dirname "$BACKUPDEV"`"
+	message "Deleting old backups from `dirname "$BACKUPDEV"`:"
 	PR=""; [ "$VERBOSE" == "yes" ] && PR="-print"
-	find . -regex ./${VOLUMENAME}_'.*\('$1'\).*' -type f -mtime +$MAXBACKUPAGE ! -name "$UPTO" -exec $RM -f {} \; $PR
+	$FIND . -regex ./${VOLUMENAME}_'.*\('$1'\).*' -type f -mtime +$MAXBACKUPAGE ! -name "$UPTO" -exec $RM -f {} \; $PR
     fi
 }
 
@@ -699,7 +701,7 @@ verbose ()
 {
     message "Generating report of $BACKUPDEV."
     if [ -d "$BACKUPDEV" ]; then
-      for i in `$LS ${BACKUPDEV}/*.${EXT}`; do
+      $LS "${BACKUPDEV}"/*.${EXT} | while read i ; do
       	BACKUPDEV=$i
 	eval "$LISTCMD"
       done
@@ -720,11 +722,13 @@ restore ()
     cd $startdir || error "bad starting directory $startdir."
     
     FILESPEC=$3
+    echo "FILESPEC: ${FILESPEC-*}"
     message "Restoring volume $VOLUMENAME files matching $FILESPEC into $startdir."
 
     if [ -d "$BACKUPDEV" ]; then
-       for i in `$LS ${BACKUPDEV}/${VOLUMENAME}_*.${EXT}`; do
+       $LS "${BACKUPDEV}"/${VOLUMENAME}_*.${EXT} | while read i; do
           BACKUPDEV=$i
+          echo "$RESTORECMD"
 	  eval "$RESTORECMD" && message "restored data from $i"
        done
     else
@@ -785,6 +789,7 @@ getrcname
 
 umask 026
 
+RCFILE="none"
 # default type argument to RC file is "none"
 TYPE="none"
 
@@ -795,7 +800,7 @@ while [ "$ready" = "no" ] ; do
 	-rc)
 	    shift
 	    RCFILE=$1
-	    # message "will use alternate resource file $RCFILE."
+	    message "will use alternate resource file $RCFILE."
 	    shift
 	    ready=no
 	    ;;
