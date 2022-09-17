@@ -1,3 +1,9 @@
+tob (0.26.cvs.20040226-7ubuntu0~ppa7) jammy; urgency=medium
+
+  * Reupload for Jammy
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Sat, 17 Sep 2022 22:26:42 +0200
+
 tob (0.26.cvs.20040226-7ubuntu0~ppa6) focal; urgency=medium
 
   * Rebuild for Focal
