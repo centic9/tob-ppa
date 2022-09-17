@@ -1,3 +1,9 @@
+tob (0.26.cvs.20040226-7ubuntu0~ppa9) jammy; urgency=medium
+
+  * One more try at fixing compat-levels
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Sat, 17 Sep 2022 22:47:41 +0200
+
 tob (0.26.cvs.20040226-7ubuntu0~ppa8) jammy; urgency=medium
 
   * Try to stay at compat=12

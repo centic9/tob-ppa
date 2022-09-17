@@ -33,7 +33,7 @@ clean:
 binary-indep: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	dh_installdirs 
         #$(MAKE) prefix=$(debtmp) install)
 	install -p -m 0755 tob 		$(debdir)/sbin/tob
