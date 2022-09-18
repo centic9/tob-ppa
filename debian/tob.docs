@@ -7,9 +7,9 @@ doc/tar.txt
 doc/tob-and-mt.tex
 doc/tob.ps.gz
 doc/tob.txt.gz
-sample-rc/tob.rc.afioz
-sample-rc/tob.rc.afioz.TEST
-sample-rc/tob.rc.arj
-sample-rc/tob.rc.remote-afioz
-sample-rc/tob.rc.tar
-debian/tob.rc.verify
+sample-rc/tob.rc.afioz examples
+sample-rc/tob.rc.afioz.TEST examples
+sample-rc/tob.rc.arj examples
+sample-rc/tob.rc.remote-afioz examples
+sample-rc/tob.rc.tar examples
+debian/tob.rc.verify examples
