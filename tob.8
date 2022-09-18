@@ -1,10 +1,10 @@
-.\" Manual page Copyright (C) 1995-98 Dirk Eddelbuettel <edd@debian.org>
+T.\" Manual page Copyright (C) 1995-98 Dirk Eddelbuettel <edd@debian.org>
 .\" 1998-11-11 Jim Van Zandt <jrv@vanzandt.mv.com>:  -restore takes
 .\"   both specification and directory arguments,  the specification
 .\"   is *not* a regular expression, and wording and format fixes.
 .\" 15 Nov 1998 Dirk Eddelbuettel <edd@debian.org>
 .\"             documented new option '-verify volume'
-.TH TOB 8 "September 15, 2002"
+.TH TOB 8 "September 15, 2002" "Debian GNU/Linux"
 .SH NAME
 tob \- Tape Oriented Backup
 .SH SYNOPSIS
@@ -114,14 +114,14 @@ The
 .B "\-find" 
 command is useful to determine in which backup a given file resides. E.g.,
 the command
-.br
-   tob \-find '.*in' 
-.br
+.ce
+tob \-find '.*in' 
+.cd 0
 lists all files ending with "in". The files can then be restored from the
 reported backup.  The command
-.br
-   tob \-find .
-.br
+.ce 
+tob \-find .
+.cd 0
 will list all files of all volumes.
 .TP
 .BI "\-full " volume
@@ -179,9 +179,9 @@ wildcards; e.g.,
 will restore any files which start with 
 "/etc/def". 
 Wildcards may have to be quoted to prevent shell expansion, as in:
-.br
-  tob \-restore '/etc/def*'
-.br
+.ce 
+tob \-restore '/etc/def*'
+.cd 0
 .\"The file specification is actually a regular expression; this means that you
 You can, e.g., restore all files which end in "myfile" with the expression 
 .IR "*myfile" ; 
