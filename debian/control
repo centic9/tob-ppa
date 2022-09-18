@@ -2,8 +2,9 @@ Source: tob
 Section: utils
 Priority: optional
 Maintainer: Dirk Eddelbuettel <edd@debian.org>
-Standards-Version: 3.8.4
+Rules-Requires-Root: no
 Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.5.1
 
 Package: tob
 Architecture: all

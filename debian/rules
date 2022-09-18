@@ -1,79 +1,13 @@
 #!/usr/bin/make -f
-# 							-*- makefile -*-
-# debian/rules file for the Debian/GNU Linux tob package
-# Copyright 1996-2007 by Dirk Eddelbuettel <edd@debian.org>
 
-package	= tob
-debdir	:= $(shell pwd)/debian/$(package)
+include /usr/share/dpkg/buildflags.mk
 
-# export DH_VERBOSE=1
+%:
+	dh $@
 
-upstreamcvs:
-	@echo "*** passwd is public ***"
-	CVSROOT=:pserver:cvspublic@tinyplanet.ca:/home/cvs/cvsroot \
-		cvs login
-	CVSROOT=:pserver:cvspublic@tinyplanet.ca:/home/cvs/cvsroot \
-		cvs checkout tob
+override_dh_installman:
+	dh_installman
+	rm -fv debian/mtools/usr/share/man/man*/floppyd*
 
-build: build-stamp
-build-stamp:
-	dh_testdir
-        # nothing to be made here  -$(MAKE)
-	touch build-stamp
-
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp 
-        #-$(MAKE) clean
-	dh_clean
-        ## no longer needed but creeps around
-	rm -vf debian/conffiles
-
-binary-indep: build
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs 
-        #$(MAKE) prefix=$(debtmp) install)
-	install -p -m 0755 tob 		$(debdir)/sbin/tob
-	install -p -m 0644 example.*    $(debdir)/etc/tob/volumes
-	install -p -m 0644 tob.rc 	$(debdir)/etc/tob/tob.rc
-#	dh_installdocs		doc/filemarks.doc doc/remotebackups.txt \
-#				doc/tob.{ps,txt}.gz README
-	dh_installdocs			doc/*
-	chmod 0644 sample-rc/* debian/tob.rc.verify
-	dh_installexamples	sample-rc/* debian/tob.rc.verify
-	install -p -m 0755 contrib/tobconv	\
-					$(debdir)/usr/sbin/tobconv
-        #
-	chown		root:backup	$(debdir)/var/lib/tob
-	chmod		g+t		$(debdir)/var/lib/tob
-        #
-        #dh_installmenu
-        #dh_installinit
-        #dh_installcron
-	dh_installman			tob.8
-	pod2man --section 8 \
-		contrib/tobconv		$(debdir)/usr/share/man/man8/tobconv.8
-        #dh_undocumented
-	dh_installchangelogs
-	dh_strip
-	dh_compress
-	dh_fixperms
-        #dh_suidregister
-	dh_installdeb
-        #dh_shlibdeps
-	dh_gencontrol
-        #dh_makeshlibs
-        #dh_md5sums
-	dh_builddeb
-
-binary-arch: build
-
-source diff:                                                                  
-	@echo >&2 'source and diff are obsolete - use dpkg-source -b'; false
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary
-
+override_dh_missing:
+	dh_missing --fail-missing
