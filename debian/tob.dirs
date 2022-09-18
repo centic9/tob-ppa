@@ -2,3 +2,4 @@ etc/tob/volumes
 sbin
 usr/sbin
 var/lib/tob
+usr/share/doc/tob/examples

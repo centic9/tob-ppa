@@ -3,3 +3,9 @@ example.exclude etc/tob/volumes
 example.startdir etc/tob/volumes
 tob sbin
 contrib/tobconv usr/sbin
+sample-rc/tob.rc.afioz usr/share/doc/tob/examples
+sample-rc/tob.rc.afioz.TEST usr/share/doc/tob/examples
+sample-rc/tob.rc.arj usr/share/doc/tob/examples
+sample-rc/tob.rc.remote-afioz usr/share/doc/tob/examples
+sample-rc/tob.rc.tar usr/share/doc/tob/examples
+debian/tob.rc.verify usr/share/doc/tob/examples
