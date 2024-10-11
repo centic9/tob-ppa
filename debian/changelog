@@ -1,3 +1,9 @@
+tob (0.26.cvs.20040226-7ubuntu0~ppa11) noble; urgency=medium
+
+  * Upload for noble
+
+ -- Dominik Stadler (Ubuntu key) <dominik.stadler@gmx.at>  Fri, 11 Oct 2024 15:19:39 +0200
+
 tob (0.26.cvs.20040226-7ubuntu0~ppa10) jammy; urgency=medium
 
   * Rework package to a newer package format
